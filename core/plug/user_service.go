@@ -1,22 +1,25 @@
-package serv
+package plug
 
 import (
 	"github.com/bytedance/sonic"
 	"github.com/go-chi/chi/v5"
 	"github.com/ichaly/jingwei/core/base"
 	"github.com/ichaly/jingwei/core/data"
+	"github.com/ichaly/jingwei/core/serv"
 	"gorm.io/gorm"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 type UserService struct {
 	db     *gorm.DB
 	render *base.Render
+	spider *serv.Spider
 }
 
-func NewUserService(d *gorm.DB, r *base.Render) base.Plugin {
-	return &UserService{d, r}
+func NewUserService(d *gorm.DB, r *base.Render, s *serv.Spider) base.Plugin {
+	return &UserService{d, r, s}
 }
 
 func (my *UserService) Name() string {
@@ -48,6 +51,18 @@ func (my *UserService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if u.Aid == "" || u.Url == "" {
 		_ = my.render.JSON(w, base.ERROR.WithMessage("参数aid或url不能为空"))
 		return
+	}
+	info, err := my.spider.GetUserInfo(u.Url)
+	if err != nil {
+		_ = my.render.JSON(w, base.ERROR.WithError(err))
+		return
+	}
+	u.Did = info["did"]
+	u.Nickname = info["nickname"]
+	u.Avatar = info["avatar"]
+	count, err := strconv.ParseInt(info["aweme_count"], 10, 0)
+	if err != nil {
+		u.ItemCount = count
 	}
 	my.db.Save(&u)
 	_ = my.render.JSON(w, base.OK.WithData(u))

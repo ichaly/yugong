@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/ichaly/jingwei/core/base"
+	"github.com/ichaly/jingwei/core/plug"
 	"github.com/ichaly/jingwei/core/serv"
 	"go.uber.org/fx"
 )
@@ -16,9 +17,12 @@ var Modules = fx.Options(
 		base.NewRouter,
 		base.NewServer,
 	),
-	fx.Provide(fx.Annotated{
-		Group:  "plugin",
-		Target: serv.NewUserService,
-	}),
+	fx.Provide(
+		serv.NewSpider,
+		fx.Annotated{
+			Group:  "plugin",
+			Target: plug.NewUserService,
+		},
+	),
 	fx.Invoke(base.Bootstrap),
 )
