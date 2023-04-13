@@ -1,0 +1,17 @@
+app:
+  name: "Jing Wei App"
+  port: 3000
+
+cache:
+  type: redis
+  host: 127.0.0.1
+  port: 6379
+  password: redis123
+
+database:
+  dialect: postgres
+  host: 127.0.0.1
+  port: 5432
+  name: jingwei_development
+  username: postgres
+  password: postgres
