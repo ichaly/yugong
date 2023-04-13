@@ -7,7 +7,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/eko/gocache/lib/v4/cache"
 	"github.com/eko/gocache/lib/v4/store"
-	"github.com/ichaly/jingwei/core/util"
+	"github.com/ichaly/yugong/core/util"
 	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
 	"gorm.io/gorm/callbacks"

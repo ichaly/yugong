@@ -3,9 +3,9 @@ package plug
 import (
 	"github.com/bytedance/sonic"
 	"github.com/go-chi/chi/v5"
-	"github.com/ichaly/jingwei/core/base"
-	"github.com/ichaly/jingwei/core/data"
-	"github.com/ichaly/jingwei/core/serv"
+	"github.com/ichaly/yugong/core/base"
+	"github.com/ichaly/yugong/core/data"
+	"github.com/ichaly/yugong/core/serv"
 	"gorm.io/gorm"
 	"io"
 	"net/http"
@@ -61,7 +61,7 @@ func (my *UserService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	u.Nickname = info["nickname"]
 	u.Avatar = info["avatar"]
 	count, err := strconv.ParseInt(info["aweme_count"], 10, 0)
-	if err != nil {
+	if err == nil {
 		u.ItemCount = count
 	}
 	my.db.Save(&u)

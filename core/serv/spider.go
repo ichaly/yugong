@@ -1,7 +1,9 @@
 package serv
 
 import (
+	"errors"
 	"fmt"
+	"github.com/avast/retry-go"
 	"github.com/kirinlabs/HttpRequest"
 	"github.com/tidwall/gjson"
 	"net/http"
@@ -44,12 +46,25 @@ func (my *Spider) GetUserInfo(url string) (map[string]string, error) {
 	location := resp.Headers().Values("location")[0]
 	regNew := regexp.MustCompile(`(?:sec_uid=)[a-z,A-Z，0-9, _, -]+`)
 	sec_uid := strings.Replace(regNew.FindAllString(location, -1)[0], "sec_uid=", "", 1)
-	res, err := req.Get(fmt.Sprintf("https://www.iesdouyin.com/web/api/v2/user/info/?sec_uid=%s", sec_uid))
-	defer res.Close()
+	var body []byte
+	err = retry.Do(func() error {
+		res, err := req.Get(fmt.Sprintf("https://www.iesdouyin.com/web/api/v2/user/info/?sec_uid=%s", sec_uid))
+		defer res.Close()
+		if err != nil {
+			return err
+		}
+		body, err = res.Body()
+		if err != nil {
+			return err
+		}
+		if string(body) == "" {
+			return errors.New("body is empty")
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	body, err := res.Body()
 	info := gjson.ParseBytes(body).Get("user_info")
 	return map[string]string{
 		"did":                       sec_uid,
@@ -63,3 +78,4 @@ func (my *Spider) GetUserInfo(url string) (map[string]string, error) {
 
 //https://github.com/PuerkitoBio/goquery
 //https://github.com/gocolly/colly
+//https://github.com/go-resty/resty

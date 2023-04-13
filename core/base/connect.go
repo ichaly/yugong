@@ -2,7 +2,7 @@ package base
 
 import (
 	"fmt"
-	"github.com/ichaly/jingwei/core/data"
+	"github.com/ichaly/yugong/core/data"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

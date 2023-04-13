@@ -1,9 +1,9 @@
 package core
 
 import (
-	"github.com/ichaly/jingwei/core/base"
-	"github.com/ichaly/jingwei/core/plug"
-	"github.com/ichaly/jingwei/core/serv"
+	"github.com/ichaly/yugong/core/base"
+	"github.com/ichaly/yugong/core/plug"
+	"github.com/ichaly/yugong/core/serv"
 	"go.uber.org/fx"
 )
 

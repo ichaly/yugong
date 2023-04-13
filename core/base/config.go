@@ -2,7 +2,7 @@ package base
 
 import (
 	"fmt"
-	"github.com/ichaly/jingwei/core/util"
+	"github.com/ichaly/yugong/core/util"
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"

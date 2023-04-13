@@ -1,9 +1,10 @@
-module github.com/ichaly/jingwei/core
+module github.com/ichaly/yugong/core
 
 go 1.20
 
 require (
 	github.com/allegro/bigcache/v3 v3.1.0
+	github.com/avast/retry-go v2.7.0+incompatible
 	github.com/bytedance/sonic v1.8.7
 	github.com/eko/gocache/lib/v4 v4.1.3
 	github.com/eko/gocache/store/bigcache/v4 v4.1.2

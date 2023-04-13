@@ -12,6 +12,6 @@ database:
   dialect: postgres
   host: 127.0.0.1
   port: 5432
-  name: jingwei_development
+  name: yugong_development
   username: postgres
   password: postgres
