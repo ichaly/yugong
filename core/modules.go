@@ -18,6 +18,7 @@ var Modules = fx.Options(
 		base.NewServer,
 	),
 	fx.Provide(
+		serv.NewScript,
 		serv.NewSpider,
 		fx.Annotated{
 			Group:  "plugin",

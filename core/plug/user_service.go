@@ -32,11 +32,23 @@ func (my *UserService) Protected() bool {
 
 func (my *UserService) Init(r chi.Router) {
 	r.Route("/user", func(r chi.Router) {
-		r.Post("/save", my.ServeHTTP)
+		r.Get("/start", my.startHandler)
+		r.Post("/save", my.saveHandler)
 	})
 }
 
-func (my *UserService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (my *UserService) startHandler(w http.ResponseWriter, r *http.Request) {
+	var user data.User
+	my.db.First(&user)
+	err := my.spider.GetVideos(user.Did, user.Aid, "0", 0)
+	if err != nil {
+		_ = my.render.JSON(w, base.ERROR.WithError(err), base.WithCode(http.StatusBadRequest))
+		return
+	}
+	_ = my.render.JSON(w, base.OK.WithData(user))
+}
+
+func (my *UserService) saveHandler(w http.ResponseWriter, r *http.Request) {
 	var u data.User
 	bty, err := io.ReadAll(r.Body)
 	if err != nil {
