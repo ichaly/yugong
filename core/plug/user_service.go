@@ -6,10 +6,12 @@ import (
 	"github.com/ichaly/yugong/core/base"
 	"github.com/ichaly/yugong/core/data"
 	"github.com/ichaly/yugong/core/serv"
+	"github.com/ichaly/yugong/core/util"
 	"gorm.io/gorm"
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type UserService struct {
@@ -40,11 +42,17 @@ func (my *UserService) Init(r chi.Router) {
 func (my *UserService) startHandler(w http.ResponseWriter, r *http.Request) {
 	var user data.User
 	my.db.First(&user)
-	err := my.spider.GetVideos(user.Did, user.Aid, "0", 0)
+	var min int64
+	if user.LastVisit != nil {
+		min = user.LastVisit.UnixNano() / 1e6
+	}
+	min, err := my.spider.GetVideos(user.Did, user.Aid, min)
 	if err != nil {
 		_ = my.render.JSON(w, base.ERROR.WithError(err), base.WithCode(http.StatusBadRequest))
 		return
 	}
+	user.LastVisit = util.TimePtr(time.UnixMilli(min))
+	my.db.Save(&user)
 	_ = my.render.JSON(w, base.OK.WithData(user))
 }
 

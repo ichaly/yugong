@@ -9,8 +9,10 @@ require (
 	github.com/ddliu/motto v0.3.1
 	github.com/dop251/goja v0.0.0-20230402114112-623f9dda9079
 	github.com/eko/gocache/lib/v4 v4.1.3
+	github.com/eko/gocache/store/bigcache/v4 v4.1.2
 	github.com/eko/gocache/store/redis/v4 v4.2.0
 	github.com/go-chi/chi/v5 v5.0.8
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/kirinlabs/HttpRequest v1.1.1
 	github.com/redis/go-redis/v9 v9.0.3
 	github.com/spf13/viper v1.15.0
@@ -31,7 +33,6 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dlclark/regexp2 v1.7.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/golang/mock v1.6.0 // indirect
