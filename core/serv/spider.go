@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/avast/retry-go"
-	_ "github.com/ddliu/motto/underscore"
 	"github.com/go-resty/resty/v2"
 	"github.com/ichaly/yugong/core/data"
+	"github.com/ichaly/yugong/core/util"
 	"github.com/kirinlabs/HttpRequest"
 	"github.com/tidwall/gjson"
 	"gorm.io/gorm"
@@ -37,10 +37,11 @@ func init() {
 type Spider struct {
 	db     *gorm.DB
 	script *Script
+	queue  *Queue
 }
 
-func NewSpider(d *gorm.DB, s *Script) *Spider {
-	return &Spider{d, s}
+func NewSpider(d *gorm.DB, s *Script, q *Queue) *Spider {
+	return &Spider{d, s, q}
 }
 
 func (my *Spider) GetUserInfo(url string) (map[string]string, error) {
@@ -119,6 +120,22 @@ func (my *Spider) GetVideos(did string, aid string, min int64) (int64, error) {
 			source := gjson.Get(body, fmt.Sprintf("aweme_list.%d.create_time", i)).Int()
 			v := &data.Video{Title: title, Url: video, Did: did, Aid: aid, Cover: cover, SourceAt: time.UnixMilli(source * 1000)}
 			my.db.Save(v)
+			my.queue.Add(func() {
+				d, _ := NewDownloader(WithOutput("/Users/Chaly/Downloads/YuGone/"))
+				name := util.FileName(v.Title, "", 0)
+
+				video, err := d.Download(v.Url, util.Join(name, ".mp4"))
+				if err != nil {
+					return
+				}
+				cover, err := d.Download(v.Cover, util.Join(name, ".jpg"))
+				if err != nil {
+					return
+				}
+
+				println(video.Name())
+				println(cover.Name())
+			})
 		}
 	}
 	return gjson.Get(body, "min_cursor").Int(), nil
