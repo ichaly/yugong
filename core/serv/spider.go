@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/avast/retry-go"
 	"github.com/go-resty/resty/v2"
+	"github.com/ichaly/yugong/core/base"
 	"github.com/ichaly/yugong/core/data"
 	"github.com/ichaly/yugong/core/util"
 	"github.com/kirinlabs/HttpRequest"
@@ -13,6 +14,7 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -38,10 +40,11 @@ type Spider struct {
 	db     *gorm.DB
 	script *Script
 	queue  *Queue
+	config *base.Config
 }
 
-func NewSpider(d *gorm.DB, s *Script, q *Queue) *Spider {
-	return &Spider{d, s, q}
+func NewSpider(d *gorm.DB, s *Script, q *Queue, c *base.Config) *Spider {
+	return &Spider{d, s, q, c}
 }
 
 func (my *Spider) GetUserInfo(url string) (map[string]string, error) {
@@ -114,6 +117,7 @@ func (my *Spider) GetVideos(did string, aid string, min int64) (int64, error) {
 	size := len(list)
 	if size > 0 {
 		for i := 0; i < size; i++ {
+			vid := gjson.Get(body, fmt.Sprintf("aweme_list.%d.aweme_id", i)).String()
 			title := gjson.Get(body, fmt.Sprintf("aweme_list.%d.desc", i)).String()
 			video := gjson.Get(body, fmt.Sprintf("aweme_list.%d.video.play_addr.url_list.0", i)).String()
 			cover := gjson.Get(body, fmt.Sprintf("aweme_list.%d.video.cover.url_list|@reverse|0", i)).String()
@@ -121,20 +125,28 @@ func (my *Spider) GetVideos(did string, aid string, min int64) (int64, error) {
 			v := &data.Video{Title: title, Url: video, Did: did, Aid: aid, Cover: cover, SourceAt: time.UnixMilli(source * 1000)}
 			my.db.Save(v)
 			my.queue.Add(func() {
-				d, _ := NewDownloader(WithOutput("/Users/Chaly/Downloads/YuGone/"))
-				name := util.FileName(v.Title, "", 0)
+				workspace := my.config.Workspace
+				d, _ := NewDownloader(WithOutput(workspace))
 
-				video, err := d.Download(v.Url, util.Join(name, ".mp4"))
+				titleFile, err := d.WriteFile(strings.NewReader(v.Title), fmt.Sprintf("t_%s.txt", vid))
 				if err != nil {
 					return
 				}
-				cover, err := d.Download(v.Cover, util.Join(name, ".jpg"))
+				defer os.Remove(titleFile.Name())
+				videoFile, err := d.Download(v.Url, fmt.Sprintf("v_%s.mp4", vid))
 				if err != nil {
 					return
 				}
-
-				println(video.Name())
-				println(cover.Name())
+				defer os.Remove(videoFile.Name())
+				coverFile, err := d.Download(v.Cover, fmt.Sprintf("c_%s.jpg", vid))
+				if err != nil {
+					return
+				}
+				defer os.Remove(coverFile.Name())
+				err = util.Compress(util.Join(workspace, vid, ".zip"), titleFile, videoFile, coverFile)
+				if err != nil {
+					return
+				}
 			})
 		}
 	}

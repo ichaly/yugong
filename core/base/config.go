@@ -10,10 +10,11 @@ import (
 )
 
 type Config struct {
-	Debug    bool        `mapstructure:"debug" jsonschema:"title=Debug"`
-	App      *App        `mapstructure:"app" jsonschema:"title=App"`
-	Cache    *DataSource `mapstructure:"cache" jsonschema:"title=Cache"`
-	Database *DataSource `mapstructure:"database" jsonschema:"title=DataSource"`
+	Debug     bool        `mapstructure:"debug" jsonschema:"title=Debug"`
+	App       *App        `mapstructure:"app" jsonschema:"title=App"`
+	Workspace string      `mapstructure:"workspace" jsonschema:"title=Workspace"`
+	Cache     *DataSource `mapstructure:"cache" jsonschema:"title=Cache"`
+	Database  *DataSource `mapstructure:"database" jsonschema:"title=DataSource"`
 }
 
 type App struct {

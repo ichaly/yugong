@@ -17,7 +17,9 @@ type Downloader struct {
 
 func WithOutput(output string) DownloaderOption {
 	return func(d *Downloader) {
-		d.output = output
+		if output != "" {
+			d.output = output
+		}
 	}
 }
 
@@ -48,6 +50,9 @@ func NewDownloader(opts ...DownloaderOption) (Downloader, error) {
 	for _, o := range opts {
 		o(&d)
 	}
+
+	_ = os.Mkdir(d.output, 0777)
+
 	return d, nil
 }
 
@@ -57,12 +62,15 @@ func (my *Downloader) Download(url string, name string) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	_ = os.Mkdir(my.output, 0777)
+	return my.WriteFile(res.RawBody(), name)
+}
+
+func (my *Downloader) WriteFile(src io.Reader, name string) (*os.File, error) {
 	file, err := os.OpenFile(path.Join(my.output, name), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	defer func() {
 		_ = file.Close()
 	}()
-	_, err = io.Copy(file, res.RawBody())
+	_, err = io.Copy(file, src)
 	if err != nil {
 		return nil, err
 	}
