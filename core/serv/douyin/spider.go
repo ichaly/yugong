@@ -96,7 +96,6 @@ func (my *Spider) GetUserInfo(url string) (map[string]string, error) {
 
 func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (int64, error) {
 	client := resty.New()
-	uri, _ := url.Parse("https://www.douyin.com/aweme/v1/web/aweme/post/")
 	params := url.Values{
 		"sec_user_id": []string{openId},
 		"count":       []string{"31"},
@@ -106,11 +105,14 @@ func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (i
 	if min > 0 {
 		params.Add("min_cursor", strconv.FormatInt(min, 10))
 	}
+	cookies := []*http.Cookie{
+		{Name: "passport_csrf_token", Value: "c8b96614139f50d240232221b574cacb"},
+		{Name: "ttwid", Value: "1%7CHQXlIa0A7vFQ2Je4UliR5vOoYX6tSdv24RZqMfNUaFg%7C1680791252%7Cb04d0bdf0e025c3135156fd23fdc730398da79188b3b458b2a051ca326dc962f"},
+	}
+	uri, _ := url.Parse("https://www.douyin.com/aweme/v1/web/aweme/post/")
 	uri.RawQuery = params.Encode()
-	res, err := client.R().
-		SetHeader("user-agent", agent).
+	res, err := client.R().SetCookies(cookies).SetHeader("user-agent", agent).
 		SetHeader("referer", "https://www.douyin.com/").
-		SetHeader("cookie", "passport_csrf_token=c8b96614139f50d240232221b574cacb;ttwid=1%7CHQXlIa0A7vFQ2Je4UliR5vOoYX6tSdv24RZqMfNUaFg%7C1680791252%7Cb04d0bdf0e025c3135156fd23fdc730398da79188b3b458b2a051ca326dc962f").
 		Get(strings.Join([]string{uri.String(), "&X-Bogus=", my.script.Sign(uri.RawQuery)}, ""))
 	if err != nil {
 		return 0, err
