@@ -1,6 +1,6 @@
 package serv
 
-type Task func()
+type Worker func()
 
 type QueueOption func(*Queue)
 
@@ -17,7 +17,7 @@ func WithCapacity(capacity int) QueueOption {
 }
 
 type Queue struct {
-	ch       chan Task
+	ch       chan Worker
 	size     int
 	capacity int
 }
@@ -27,7 +27,7 @@ func NewQueue(opts ...QueueOption) *Queue {
 	for _, o := range opts {
 		o(q)
 	}
-	q.ch = make(chan Task, q.capacity)
+	q.ch = make(chan Worker, q.capacity)
 	for i := 0; i < q.size; i++ {
 		go func() {
 			for {
@@ -41,7 +41,7 @@ func NewQueue(opts ...QueueOption) *Queue {
 	return q
 }
 
-func (my *Queue) Add(t Task) {
+func (my *Queue) Push(t Worker) {
 	go func() {
 		my.ch <- t
 	}()

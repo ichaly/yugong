@@ -2,14 +2,14 @@ package test
 
 import (
 	"github.com/go-resty/resty/v2"
-	"github.com/ichaly/yugong/core/serv"
+	"github.com/ichaly/yugong/core/serv/douyin"
 	"net/url"
 	"strings"
 	"testing"
 )
 
 func TestHttp(t *testing.T) {
-	s, err := serv.NewScript()
+	s, err := douyin.NewScript()
 	if err != nil {
 		return
 	}

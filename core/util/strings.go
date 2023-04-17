@@ -1,6 +1,8 @@
 package util
 
-import "strings"
+import (
+	"strings"
+)
 
 func Join(elem ...string) string {
 	b := strings.Builder{}

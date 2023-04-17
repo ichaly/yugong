@@ -1,4 +1,4 @@
-package serv
+package douyin
 
 import (
 	_ "embed"
@@ -8,6 +8,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/ichaly/yugong/core/base"
 	"github.com/ichaly/yugong/core/data"
+	"github.com/ichaly/yugong/core/serv"
 	"github.com/ichaly/yugong/core/util"
 	"github.com/kirinlabs/HttpRequest"
 	"github.com/tidwall/gjson"
@@ -40,11 +41,11 @@ func init() {
 type Spider struct {
 	db     *gorm.DB
 	script *Script
-	queue  *Queue
+	queue  *serv.Queue
 	config *base.Config
 }
 
-func NewSpider(d *gorm.DB, s *Script, q *Queue, c *base.Config) *Spider {
+func NewSpider(d *gorm.DB, s *Script, q *serv.Queue, c *base.Config) *Spider {
 	return &Spider{d, s, q, c}
 }
 
@@ -126,14 +127,13 @@ func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (i
 			create := gjson.Get(body, fmt.Sprintf("aweme_list.%d.create_time", i)).Int()
 			uploadTime := time.Now()
 			v := &data.Video{
-				Title: title, Url: video, Did: did, Aid: aid, Cover: cover,
-				UploadAt: util.TimePtr(uploadTime),
-				SourceAt: time.UnixMilli(create * 1000),
+				From: data.DouYin, Title: title, Url: video, Fid: did, Aid: aid, Cover: cover,
+				UploadAt: util.TimePtr(uploadTime), SourceAt: time.UnixMilli(create * 1000),
 			}
 			my.db.Save(v)
-			my.queue.Add(func() {
+			my.queue.Push(func() {
 				workspace := my.config.Workspace
-				d := NewDownloader()
+				d := serv.NewDownloader()
 
 				titleFile := path.Join(workspace, fmt.Sprintf("t0-%s.txt", vid))
 				err := util.WriteFile(strings.NewReader(v.Title), titleFile)
@@ -168,7 +168,7 @@ func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (i
 					fmt.Sprintf("daren/2212890871317/zip/%s.zip", vid),
 					strconv.FormatInt(v.UploadAt.UnixNano()/1e6, 10),
 					vid,
-					v.Did,
+					v.Fid,
 				}
 				err = util.WriteFile(strings.NewReader(strings.Join(content, "\n")), txtFile)
 				if err != nil {

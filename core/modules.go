@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/ichaly/yugong/core/base"
 	"github.com/ichaly/yugong/core/serv"
+	"github.com/ichaly/yugong/core/serv/douyin"
 	"github.com/ichaly/yugong/core/view"
 	"go.uber.org/fx"
 )
@@ -19,11 +20,11 @@ var Modules = fx.Options(
 	),
 	fx.Provide(
 		serv.NewQueue,
-		serv.NewScript,
-		serv.NewSpider,
+		douyin.NewScript,
+		douyin.NewSpider,
 		fx.Annotated{
 			Group:  "plugin",
-			Target: view.NewUserApi,
+			Target: view.NewDouyinApi,
 		},
 	),
 	fx.Invoke(base.Bootstrap),
