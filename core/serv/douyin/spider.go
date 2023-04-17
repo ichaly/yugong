@@ -134,42 +134,43 @@ func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (i
 			my.queue.Push(func() {
 				workspace := my.config.Workspace
 				d := serv.NewDownloader()
-
-				titleFile := path.Join(workspace, fmt.Sprintf("t0-%s.txt", vid))
+				id := strconv.Itoa(int(v.Id))
+				//生成标题文件
+				titleFile := path.Join(workspace, id, fmt.Sprintf("t0-%s.txt", vid))
 				err := util.WriteFile(strings.NewReader(v.Title), titleFile)
 				if err != nil {
 					return
 				}
 				defer os.Remove(titleFile)
 
-				coverFile := path.Join(workspace, fmt.Sprintf("v1-%s.jpg", vid))
+				//下载封面
+				coverFile := path.Join(workspace, id, fmt.Sprintf("v1-%s.jpg", vid))
 				d.Download(v.Cover, coverFile)
 				if err != nil {
 					return
 				}
 				defer os.Remove(coverFile)
 
-				videoFile := path.Join(workspace, fmt.Sprintf("v2-%s.mp4", vid))
+				//下载视频
+				videoFile := path.Join(workspace, id, fmt.Sprintf("v2-%s.mp4", vid))
 				d.Download(v.Url, videoFile)
 				if err != nil {
 					return
 				}
 				defer os.Remove(videoFile)
 
-				zipFile := path.Join(workspace, fmt.Sprintf("%s.zip", vid))
+				//打包文件
+				zipFile := path.Join(workspace, id, fmt.Sprintf("%s.zip", vid))
 				err = util.Compress(zipFile, titleFile, videoFile, coverFile)
 				if err != nil {
 					return
 				}
 
-				txtFile := path.Join(workspace, fmt.Sprintf("%d.txt", v.Id))
-				content := []string{
-					v.Aid,
-					fmt.Sprintf("daren/2212890871317/zip/%s.zip", vid),
-					strconv.FormatInt(v.UploadAt.UnixNano()/1e6, 10),
-					vid,
-					v.Fid,
-				}
+				//生成索引
+				txtFile := path.Join(workspace, id, fmt.Sprintf("%s.txt", id))
+				filepath := fmt.Sprintf("daren/%s/zip/%s.zip", v.Aid, vid)
+				timestamp := strconv.FormatInt(v.UploadAt.UnixNano()/1e6, 10)
+				content := []string{v.Aid, filepath, timestamp, vid, v.Fid}
 				err = util.WriteFile(strings.NewReader(strings.Join(content, "\n")), txtFile)
 				if err != nil {
 					return
