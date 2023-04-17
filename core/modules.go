@@ -2,8 +2,8 @@ package core
 
 import (
 	"github.com/ichaly/yugong/core/base"
-	"github.com/ichaly/yugong/core/plug"
 	"github.com/ichaly/yugong/core/serv"
+	"github.com/ichaly/yugong/core/view"
 	"go.uber.org/fx"
 )
 
@@ -23,7 +23,7 @@ var Modules = fx.Options(
 		serv.NewSpider,
 		fx.Annotated{
 			Group:  "plugin",
-			Target: plug.NewUserService,
+			Target: view.NewUserApi,
 		},
 	),
 	fx.Invoke(base.Bootstrap),

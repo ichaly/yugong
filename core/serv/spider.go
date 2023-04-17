@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -82,7 +83,8 @@ func (my *Spider) GetUserInfo(url string) (map[string]string, error) {
 	}
 	info := gjson.ParseBytes(body).Get("user_info")
 	return map[string]string{
-		"did":                       sec_uid,
+		"openid":                    sec_uid,
+		"uid":                       info.Get("uid").String(),
 		"nickname":                  info.Get("nickname").String(),
 		"signature":                 info.Get("signature").String(),
 		"avatar":                    info.Get("avatar_larger.url_list.0").String(),
@@ -91,11 +93,11 @@ func (my *Spider) GetUserInfo(url string) (map[string]string, error) {
 	}, nil
 }
 
-func (my *Spider) GetVideos(did string, aid string, min int64) (int64, error) {
+func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (int64, error) {
 	client := resty.New()
 	uri, _ := url.Parse("https://www.douyin.com/aweme/v1/web/aweme/post/")
 	params := url.Values{
-		"sec_user_id": []string{did},
+		"sec_user_id": []string{openId},
 		"count":       []string{"31"},
 		"aid":         []string{"6383"},
 		"max_cursor":  []string{strconv.FormatInt(time.Now().UnixNano()/1e6, 10)},
@@ -121,29 +123,54 @@ func (my *Spider) GetVideos(did string, aid string, min int64) (int64, error) {
 			title := gjson.Get(body, fmt.Sprintf("aweme_list.%d.desc", i)).String()
 			video := gjson.Get(body, fmt.Sprintf("aweme_list.%d.video.play_addr.url_list.0", i)).String()
 			cover := gjson.Get(body, fmt.Sprintf("aweme_list.%d.video.cover.url_list|@reverse|0", i)).String()
-			source := gjson.Get(body, fmt.Sprintf("aweme_list.%d.create_time", i)).Int()
-			v := &data.Video{Title: title, Url: video, Did: did, Aid: aid, Cover: cover, SourceAt: time.UnixMilli(source * 1000)}
+			create := gjson.Get(body, fmt.Sprintf("aweme_list.%d.create_time", i)).Int()
+			uploadTime := time.Now()
+			v := &data.Video{
+				Title: title, Url: video, Did: did, Aid: aid, Cover: cover,
+				UploadAt: util.TimePtr(uploadTime),
+				SourceAt: time.UnixMilli(create * 1000),
+			}
 			my.db.Save(v)
 			my.queue.Add(func() {
 				workspace := my.config.Workspace
-				d, _ := NewDownloader(WithOutput(workspace))
+				d := NewDownloader()
 
-				titleFile, err := d.WriteFile(strings.NewReader(v.Title), fmt.Sprintf("t_%s.txt", vid))
+				titleFile := path.Join(workspace, fmt.Sprintf("t0-%s.txt", vid))
+				err := util.WriteFile(strings.NewReader(v.Title), titleFile)
 				if err != nil {
 					return
 				}
-				defer os.Remove(titleFile.Name())
-				videoFile, err := d.Download(v.Url, fmt.Sprintf("v_%s.mp4", vid))
+				defer os.Remove(titleFile)
+
+				coverFile := path.Join(workspace, fmt.Sprintf("v1-%s.jpg", vid))
+				d.Download(v.Cover, coverFile)
 				if err != nil {
 					return
 				}
-				defer os.Remove(videoFile.Name())
-				coverFile, err := d.Download(v.Cover, fmt.Sprintf("c_%s.jpg", vid))
+				defer os.Remove(coverFile)
+
+				videoFile := path.Join(workspace, fmt.Sprintf("v2-%s.mp4", vid))
+				d.Download(v.Url, videoFile)
 				if err != nil {
 					return
 				}
-				defer os.Remove(coverFile.Name())
-				err = util.Compress(util.Join(workspace, vid, ".zip"), titleFile, videoFile, coverFile)
+				defer os.Remove(videoFile)
+
+				zipFile := path.Join(workspace, fmt.Sprintf("%s.zip", vid))
+				err = util.Compress(zipFile, titleFile, videoFile, coverFile)
+				if err != nil {
+					return
+				}
+
+				txtFile := path.Join(workspace, fmt.Sprintf("%d.txt", v.Id))
+				content := []string{
+					v.Aid,
+					fmt.Sprintf("daren/2212890871317/zip/%s.zip", vid),
+					strconv.FormatInt(v.UploadAt.UnixNano()/1e6, 10),
+					vid,
+					v.Did,
+				}
+				err = util.WriteFile(strings.NewReader(strings.Join(content, "\n")), txtFile)
 				if err != nil {
 					return
 				}

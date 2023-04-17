@@ -1,35 +1,23 @@
 package util
 
 import (
-	"fmt"
-	"runtime"
-	"strings"
+	"io"
+	"os"
+	"path/filepath"
 )
 
-func LimitLength(s string, length int) string {
-	// 0 means unlimited
-	if length == 0 {
-		return s
+func WriteFile(source io.Reader, target string) error {
+	_ = os.MkdirAll(filepath.Dir(target), 0777)
+	file, err := os.OpenFile(target, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		return err
 	}
-
-	const ELLIPSES = "..."
-	str := []rune(s)
-	if len(str) > length {
-		return string(str[:length-len(ELLIPSES)]) + ELLIPSES
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
+	_, err = io.Copy(file, source)
+	if err != nil {
+		return err
 	}
-	return s
-}
-
-func FileName(name, ext string, length int) string {
-	rep := strings.NewReplacer("\n", " ", "/", " ", "|", "-", ": ", "：", ":", "：", "'", "’")
-	name = rep.Replace(name)
-	if runtime.GOOS == "windows" {
-		rep = strings.NewReplacer("\"", " ", "?", " ", "*", " ", "\\", " ", "<", " ", ">", " ")
-		name = rep.Replace(name)
-	}
-	limitedName := LimitLength(name, length)
-	if ext == "" {
-		return limitedName
-	}
-	return fmt.Sprintf("%s.%s", limitedName, ext)
+	return nil
 }

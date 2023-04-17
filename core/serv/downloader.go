@@ -2,25 +2,14 @@ package serv
 
 import (
 	"github.com/go-resty/resty/v2"
-	"io"
-	"os"
-	"path"
+	"github.com/ichaly/yugong/core/util"
 )
 
 type DownloaderOption func(*Downloader)
 
 type Downloader struct {
-	output     string
 	maxThread  int
 	retryTimes int
-}
-
-func WithOutput(output string) DownloaderOption {
-	return func(d *Downloader) {
-		if output != "" {
-			d.output = output
-		}
-	}
 }
 
 func WithMaxThread(maxThread int) DownloaderOption {
@@ -35,44 +24,26 @@ func WithRetryTimes(retryTimes int) DownloaderOption {
 	}
 }
 
-func NewDownloader(opts ...DownloaderOption) (Downloader, error) {
+func NewDownloader(opts ...DownloaderOption) Downloader {
 	d := Downloader{maxThread: 1, retryTimes: 3}
-
-	tmp, err := os.MkdirTemp("", "YuGong*.tmp")
-	if err != nil {
-		return d, nil
-	}
-
-	//default setting
-	d.output = tmp
 
 	//custom setting
 	for _, o := range opts {
 		o(&d)
 	}
 
-	_ = os.Mkdir(d.output, 0777)
-
-	return d, nil
+	return d
 }
 
-func (my *Downloader) Download(url string, name string) (*os.File, error) {
+func (my *Downloader) Download(url string, target string) (err error) {
 	client := resty.New().SetDoNotParseResponse(true)
 	res, err := client.R().Get(url)
 	if err != nil {
-		return nil, err
+		return
 	}
-	return my.WriteFile(res.RawBody(), name)
-}
-
-func (my *Downloader) WriteFile(src io.Reader, name string) (*os.File, error) {
-	file, err := os.OpenFile(path.Join(my.output, name), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
-	defer func() {
-		_ = file.Close()
-	}()
-	_, err = io.Copy(file, src)
+	err = util.WriteFile(res.RawBody(), target)
 	if err != nil {
-		return nil, err
+		return
 	}
-	return file, nil
+	return
 }

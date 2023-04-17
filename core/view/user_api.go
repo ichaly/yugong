@@ -1,4 +1,4 @@
-package plug
+package view
 
 import (
 	"github.com/bytedance/sonic"
@@ -14,39 +14,39 @@ import (
 	"time"
 )
 
-type UserService struct {
+type UserApi struct {
 	db     *gorm.DB
 	render *base.Render
 	spider *serv.Spider
 }
 
-func NewUserService(d *gorm.DB, r *base.Render, s *serv.Spider) base.Plugin {
-	return &UserService{d, r, s}
+func NewUserApi(d *gorm.DB, r *base.Render, s *serv.Spider) base.Plugin {
+	return &UserApi{d, r, s}
 }
 
-func (my *UserService) Name() string {
-	return "UserService"
+func (my *UserApi) Name() string {
+	return "UserApi"
 }
 
-func (my *UserService) Protected() bool {
+func (my *UserApi) Protected() bool {
 	return false
 }
 
-func (my *UserService) Init(r chi.Router) {
+func (my *UserApi) Init(r chi.Router) {
 	r.Route("/user", func(r chi.Router) {
 		r.Get("/start", my.startHandler)
 		r.Post("/save", my.saveHandler)
 	})
 }
 
-func (my *UserService) startHandler(w http.ResponseWriter, r *http.Request) {
+func (my *UserApi) startHandler(w http.ResponseWriter, r *http.Request) {
 	var user data.User
 	my.db.First(&user)
 	var min int64
 	if user.LastVisit != nil {
 		min = user.LastVisit.UnixNano() / 1e6
 	}
-	min, err := my.spider.GetVideos(user.Did, user.Aid, min)
+	min, err := my.spider.GetVideos(user.OpenId, user.Did, user.Aid, min)
 	if err != nil {
 		_ = my.render.JSON(w, base.ERROR.WithError(err), base.WithCode(http.StatusBadRequest))
 		return
@@ -56,7 +56,7 @@ func (my *UserService) startHandler(w http.ResponseWriter, r *http.Request) {
 	_ = my.render.JSON(w, base.OK.WithData(user))
 }
 
-func (my *UserService) saveHandler(w http.ResponseWriter, r *http.Request) {
+func (my *UserApi) saveHandler(w http.ResponseWriter, r *http.Request) {
 	var u data.User
 	bty, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -77,9 +77,10 @@ func (my *UserService) saveHandler(w http.ResponseWriter, r *http.Request) {
 		_ = my.render.JSON(w, base.ERROR.WithError(err))
 		return
 	}
-	u.Did = info["did"]
-	u.Nickname = info["nickname"]
+	u.Did = info["uid"]
+	u.OpenId = info["openid"]
 	u.Avatar = info["avatar"]
+	u.Nickname = info["nickname"]
 	count, err := strconv.ParseInt(info["aweme_count"], 10, 0)
 	if err == nil {
 		u.ItemCount = count

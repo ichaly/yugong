@@ -4,6 +4,7 @@ import "time"
 
 type User struct {
 	Id        uint       `gorm:"AUTO_INCREMENT;comment:ID"`
+	OpenId    string     `gorm:"size:100;comment:抖音OpenId"`
 	Aid       string     `gorm:"size:100;comment:阿里号"`
 	Did       string     `gorm:"size:100;comment:抖音号"`
 	Url       string     `gorm:"size:200;unique_index;comment:分享链接"`

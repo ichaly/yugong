@@ -7,10 +7,11 @@ import (
 )
 
 // Compress 压缩文件
-func Compress(dest string, files ...*os.File) error {
+func Compress(dest string, files ...string) error {
 	// 预防：旧文件无法覆盖
 	_ = os.RemoveAll(dest)
 
+	//创建zip文件
 	d, _ := os.Create(dest)
 	defer d.Close()
 	w := zip.NewWriter(d)
@@ -24,8 +25,8 @@ func Compress(dest string, files ...*os.File) error {
 	return nil
 }
 
-func compress(file *os.File, prefix string, zw *zip.Writer) error {
-	file, err := os.Open(file.Name())
+func compress(name string, prefix string, zw *zip.Writer) error {
+	file, err := os.Open(name)
 	if err != nil {
 		return err
 	}
@@ -40,11 +41,7 @@ func compress(file *os.File, prefix string, zw *zip.Writer) error {
 			return err
 		}
 		for _, fi := range fileInfos {
-			f, err := os.Open(file.Name() + "/" + fi.Name())
-			if err != nil {
-				return err
-			}
-			err = compress(f, prefix, zw)
+			err = compress(file.Name()+"/"+fi.Name(), prefix, zw)
 			if err != nil {
 				return err
 			}
