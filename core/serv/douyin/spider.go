@@ -177,6 +177,19 @@ func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (i
 				if err != nil {
 					return
 				}
+
+				//上传文件
+				err = util.UploadFile(zipFile, v.Aid, fmt.Sprintf("%s___", timestamp))
+				if err != nil {
+					return
+				}
+				err = util.UploadFile(txtFile, v.Aid, "index/")
+				if err != nil {
+					return
+				}
+
+				//更新状态
+				my.db.Model(v).Update("state", 1)
 			})
 		}
 	}
