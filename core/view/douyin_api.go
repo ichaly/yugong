@@ -40,20 +40,22 @@ func (my *DouyinApi) Init(r chi.Router) {
 }
 
 func (my *DouyinApi) startHandler(w http.ResponseWriter, r *http.Request) {
-	var user data.Douyin
-	my.db.First(&user)
-	var min int64
-	if user.LastTime != nil {
-		min = user.LastTime.UnixNano() / 1e6
+	var users []data.Douyin
+	my.db.Find(&users)
+	for _, user := range users {
+		var min int64
+		if user.LastTime != nil {
+			min = user.LastTime.UnixNano() / 1e6
+		}
+		min, err := my.spider.GetVideos(user.OpenId, user.Fid, user.Aid, min)
+		if err != nil {
+			_ = my.render.JSON(w, base.ERROR.WithError(err), base.WithCode(http.StatusBadRequest))
+			return
+		}
+		user.LastTime = util.TimePtr(time.UnixMilli(min))
+		my.db.Save(&user)
 	}
-	min, err := my.spider.GetVideos(user.OpenId, user.Fid, user.Aid, min)
-	if err != nil {
-		_ = my.render.JSON(w, base.ERROR.WithError(err), base.WithCode(http.StatusBadRequest))
-		return
-	}
-	user.LastTime = util.TimePtr(time.UnixMilli(min))
-	//my.db.Save(&user)
-	_ = my.render.JSON(w, base.OK.WithData(user))
+	_ = my.render.JSON(w, base.OK.WithData(users))
 }
 
 func (my *DouyinApi) saveHandler(w http.ResponseWriter, r *http.Request) {
