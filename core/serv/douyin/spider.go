@@ -171,7 +171,7 @@ func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (i
 				//生成索引
 				txtFile := path.Join(workspace, id, fmt.Sprintf("%s.txt", id))
 				timestamp := strconv.FormatInt(v.UploadAt.UnixNano()/1e6, 10)
-				filepath := fmt.Sprintf("daren/%s/zip/%s___%s.zip", v.Aid, timestamp, v.Vid)
+				filepath := fmt.Sprintf("daren/2215630453359/zip/%s___%s.zip", timestamp, v.Vid)
 				content := []string{v.Aid, filepath, timestamp, v.Vid, v.Fid}
 				err = util.WriteFile(strings.NewReader(strings.Join(content, "\n")), txtFile)
 				if err != nil {

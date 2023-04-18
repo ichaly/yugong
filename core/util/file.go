@@ -39,9 +39,9 @@ func UploadFile(source, aid, padding string) error {
 	res, err := client.R().
 		SetFileReader("file", fileName, bytes.NewReader(fileBytes)).
 		SetFormData(map[string]string{
-			"key":            fmt.Sprintf("daren/%s/zip/%s%s", aid, padding, fileName),
-			"policy":         "eyJleHBpcmF0aW9uIjoiMjAyNS0wNC0xN1QwOTo1NjoyMi41ODlaIiwiY29uZGl0aW9ucyI6W1siY29udGVudC1sZW5ndGgtcmFuZ2UiLDAsMjA5NzE1MjAwMF0sWyJzdGFydHMtd2l0aCIsIiRrZXkiLCJkYXJlbi82NTYyNjU2ODIvemlwLyJdXX0=",
-			"Signature":      "Uvl/DXV5HWo2O251M4+vG7nHhkw=",
+			"key":            fmt.Sprintf("daren/2215630453359/zip/%s%s", padding, fileName),
+			"policy":         "eyJleHBpcmF0aW9uIjoiMjAyNS0wNC0xN1QxMzowOTozOC4zMjNaIiwiY29uZGl0aW9ucyI6W1siY29udGVudC1sZW5ndGgtcmFuZ2UiLDAsMjA5NzE1MjAwMF0sWyJzdGFydHMtd2l0aCIsIiRrZXkiLCJkYXJlbi8yMjE1NjMwNDUzMzU5L3ppcC8iXV19",
+			"Signature":      "8uCPEIVsVa9o8cV4RXAUoScBX94=",
 			"OSSAccessKeyId": "LTAI4G6jrdfWbfGFZJGNYnKN",
 		}).Post("https://duke-daren-videos.oss-cn-beijing.aliyuncs.com/")
 	if err != nil {
