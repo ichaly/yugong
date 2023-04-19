@@ -1,48 +1,68 @@
 package serv
 
-type Worker func()
+import (
+	"context"
+	"fmt"
+	"go.uber.org/fx"
+)
+
+type Queue struct {
+	capacity int
+	count    int
+	bus      chan Job
+}
+
+type Job interface {
+	process(worker string)
+}
 
 type QueueOption func(*Queue)
 
-func WithSize(size int) QueueOption {
+func WithCount(count int) QueueOption {
 	return func(d *Queue) {
-		d.size = size
+		d.count = count
 	}
 }
 
-func WithCapacity1(capacity int) QueueOption {
+func WithCapacity(capacity int) QueueOption {
 	return func(d *Queue) {
 		d.capacity = capacity
 	}
 }
 
-type Queue struct {
-	ch       chan Worker
-	size     int
-	capacity int
-}
-
-func NewQueue(opts ...QueueOption) *Queue {
-	q := &Queue{capacity: 10, size: 1}
+func NewQueue(l fx.Lifecycle, opts ...QueueOption) *Queue {
+	q := Queue{capacity: 10, count: 5}
 	for _, o := range opts {
-		o(q)
+		o(&q)
 	}
-	q.ch = make(chan Worker, q.capacity)
-	for i := 0; i < q.size; i++ {
-		go func() {
-			for {
-				select {
-				case fn := <-q.ch:
-					fn()
-				}
+	q.bus = make(chan Job, q.capacity)
+	l.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			for i := 0; i < q.count; i++ {
+				go q.worker(fmt.Sprintf("worker_%d", i))
 			}
-		}()
-	}
-	return q
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			q.Close()
+			return nil
+		},
+	})
+	return &q
 }
 
-func (my *Queue) Push(t Worker) {
+func (my *Queue) worker(name string) {
+	for j := range my.bus {
+		j.process(name)
+	}
+}
+
+func (my *Queue) Push(j Job) {
 	go func() {
-		my.ch <- t
+		my.bus <- j
 	}()
+}
+
+func (my *Queue) Close() {
+	close(my.bus)
 }

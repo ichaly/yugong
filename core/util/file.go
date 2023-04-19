@@ -52,3 +52,16 @@ func UploadFile(source, aid, padding string) error {
 	}
 	return nil
 }
+
+func DownloadFile(url string, target string) (err error) {
+	client := resty.New().SetDoNotParseResponse(true)
+	res, err := client.R().Get(url)
+	if err != nil {
+		return
+	}
+	err = WriteFile(res.RawBody(), target)
+	if err != nil {
+		return
+	}
+	return
+}

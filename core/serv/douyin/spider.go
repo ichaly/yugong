@@ -15,8 +15,6 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"net/url"
-	"os"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -98,7 +96,7 @@ func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (i
 	client := resty.New()
 	params := url.Values{
 		"sec_user_id": []string{openId},
-		"count":       []string{"31"},
+		"count":       []string{"30"},
 		"aid":         []string{"6383"},
 		"max_cursor":  []string{strconv.FormatInt(time.Now().UnixNano()/1e6, 10)},
 	}
@@ -128,69 +126,12 @@ func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (i
 			cover := gjson.Get(body, fmt.Sprintf("aweme_list.%d.video.cover.url_list|@reverse|0", i)).String()
 			create := gjson.Get(body, fmt.Sprintf("aweme_list.%d.create_time", i)).Int()
 			uploadTime := time.Now()
-			v := &data.Video{
+			v := data.Video{
 				From: data.DouYin, Title: title, Url: video, Fid: did, Aid: aid, Cover: cover,
 				Vid: vid, UploadAt: util.TimePtr(uploadTime), SourceAt: time.UnixMilli(create * 1000),
 			}
-			my.db.Save(v)
-			my.queue.Push(func() {
-				workspace := my.config.Workspace
-				d := serv.NewDownloader()
-				id := strconv.Itoa(int(v.Id))
-				//生成标题文件
-				titleFile := path.Join(workspace, id, fmt.Sprintf("t0-%s.txt", v.Vid))
-				err := util.WriteFile(strings.NewReader(v.Title), titleFile)
-				if err != nil {
-					return
-				}
-				defer os.Remove(titleFile)
-
-				//下载封面
-				coverFile := path.Join(workspace, id, fmt.Sprintf("v1-%s.jpg", v.Vid))
-				d.Download(v.Cover, coverFile)
-				if err != nil {
-					return
-				}
-				defer os.Remove(coverFile)
-
-				//下载视频
-				videoFile := path.Join(workspace, id, fmt.Sprintf("v2-%s.mp4", v.Vid))
-				d.Download(v.Url, videoFile)
-				if err != nil {
-					return
-				}
-				defer os.Remove(videoFile)
-
-				//打包文件
-				zipFile := path.Join(workspace, id, fmt.Sprintf("%s.zip", v.Vid))
-				err = util.Compress(zipFile, titleFile, videoFile, coverFile)
-				if err != nil {
-					return
-				}
-
-				//生成索引
-				txtFile := path.Join(workspace, id, fmt.Sprintf("%s.txt", id))
-				timestamp := strconv.FormatInt(v.UploadAt.UnixNano()/1e6, 10)
-				filepath := fmt.Sprintf("daren/2215630453359/zip/%s___%s.zip", timestamp, v.Vid)
-				content := []string{v.Aid, filepath, timestamp, v.Vid, v.Fid}
-				err = util.WriteFile(strings.NewReader(strings.Join(content, "\n")), txtFile)
-				if err != nil {
-					return
-				}
-
-				//上传文件
-				err = util.UploadFile(zipFile, v.Aid, fmt.Sprintf("%s___", timestamp))
-				if err != nil {
-					return
-				}
-				err = util.UploadFile(txtFile, v.Aid, "index/")
-				if err != nil {
-					return
-				}
-
-				//更新状态
-				my.db.Model(v).Update("state", 1)
-			})
+			my.db.Save(&v)
+			my.queue.Push(serv.NewTask(my.config.Workspace, my.db, v))
 		}
 	}
 	return gjson.Get(body, "min_cursor").Int(), nil
