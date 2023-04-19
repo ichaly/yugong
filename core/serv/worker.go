@@ -24,6 +24,8 @@ func NewTask(workspace string, db *gorm.DB, video data.Video) *Task {
 
 func (my *Task) process(worker string) {
 	var wg sync.WaitGroup
+	wg.Add(2)
+
 	id := strconv.Itoa(int(my.v.Id))
 	timestamp := strconv.FormatInt(my.v.UploadAt.UnixNano()/1e6, 10)
 
@@ -42,19 +44,14 @@ func (my *Task) process(worker string) {
 	if err != nil {
 		return
 	}
-	//上传索引
-	err = util.UploadFile(txtFile, my.v.Aid, "index/")
-	if err != nil {
-		return
-	}
 
 	//下载封面
 	coverFile := path.Join(my.w, id, fmt.Sprintf("v1-%s.jpg", my.v.Vid))
 	go func() {
-		wg.Add(1)
 		defer wg.Done()
 		err = util.DownloadFile(my.v.Cover, coverFile)
 		if err != nil {
+			panic(err)
 			return
 		}
 	}()
@@ -62,10 +59,10 @@ func (my *Task) process(worker string) {
 	//下载视频
 	videoFile := path.Join(my.w, id, fmt.Sprintf("v2-%s.mp4", my.v.Vid))
 	go func() {
-		wg.Add(1)
 		defer wg.Done()
 		err = util.DownloadFile(my.v.Url, videoFile)
 		if err != nil {
+			panic(err)
 			return
 		}
 	}()
@@ -79,16 +76,21 @@ func (my *Task) process(worker string) {
 		return
 	}
 
+	//删除文件
+	_ = os.Remove(titleFile)
+	_ = os.Remove(coverFile)
+	_ = os.Remove(videoFile)
+
 	//上传文件
 	err = util.UploadFile(zipFile, my.v.Aid, fmt.Sprintf("%s___", timestamp))
 	if err != nil {
 		return
 	}
-
-	_ = os.Remove(txtFile)
-	_ = os.Remove(titleFile)
-	_ = os.Remove(coverFile)
-	_ = os.Remove(videoFile)
+	//上传索引
+	err = util.UploadFile(txtFile, my.v.Aid, "index/")
+	if err != nil {
+		return
+	}
 
 	//更新状态
 	my.d.Model(my.v).Update("state", 1)

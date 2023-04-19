@@ -53,7 +53,7 @@ func (my *DouyinApi) startHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		user.LastTime = util.TimePtr(time.UnixMilli(min))
-		my.db.Save(&user)
+		//my.db.Save(&user)
 	}
 	_ = my.render.JSON(w, base.OK.WithData(users))
 }
