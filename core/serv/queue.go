@@ -31,7 +31,7 @@ func WithCapacity(capacity int) QueueOption {
 }
 
 func NewQueue(l fx.Lifecycle, opts ...QueueOption) *Queue {
-	q := Queue{capacity: 10, count: 5}
+	q := Queue{capacity: 64, count: 16}
 	for _, o := range opts {
 		o(&q)
 	}
