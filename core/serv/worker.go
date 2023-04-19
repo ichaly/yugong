@@ -46,7 +46,7 @@ func (my *Task) process(worker string) {
 	}
 
 	//下载封面
-	coverFile := path.Join(my.w, id, fmt.Sprintf("v1-%s.jpg", my.v.Vid))
+	coverFile := path.Join(my.w, id, fmt.Sprintf("c1-%s.jpg", my.v.Vid))
 	go func() {
 		defer wg.Done()
 		err = util.DownloadFile(my.v.Cover, coverFile)
