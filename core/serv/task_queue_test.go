@@ -30,9 +30,10 @@ func TestTaskQueue(t *testing.T) {
 		d := DownloadFile{
 			Url: fmt.Sprintf("http://example.com/%d", i),
 		}
-		q.Add(&d)
-		println(d.File)
+		q.Push(&d)
+		println("task"+d.Url, "is pushed")
 	}
 
 	wg.Wait()
+	q.Close()
 }

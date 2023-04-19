@@ -10,7 +10,7 @@ func WithSize(size int) QueueOption {
 	}
 }
 
-func WithCapacity(capacity int) QueueOption {
+func WithCapacity1(capacity int) QueueOption {
 	return func(d *Queue) {
 		d.capacity = capacity
 	}

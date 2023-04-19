@@ -7,17 +7,11 @@ import (
 type TaskQueue struct {
 	capacity int
 	count    int
-	pipe     chan Job
+	bus      chan Job
 }
 
 type Job interface {
 	process(worker string)
-}
-
-func worker(pipe <-chan Job, name string) {
-	for j := range pipe {
-		j.process(name)
-	}
 }
 
 type TaskQueueOption func(*TaskQueue)
@@ -28,24 +22,36 @@ func WithCount(count int) TaskQueueOption {
 	}
 }
 
-func WithTaskQueueCapacity(capacity int) TaskQueueOption {
+func WithCapacity(capacity int) TaskQueueOption {
 	return func(d *TaskQueue) {
 		d.capacity = capacity
 	}
 }
 
-func NewTaskQueue() *TaskQueue {
-	t := TaskQueue{
-		capacity: 10,
-		count:    5,
+func NewTaskQueue(opts ...TaskQueueOption) *TaskQueue {
+	t := TaskQueue{capacity: 10, count: 5}
+	for _, o := range opts {
+		o(&t)
 	}
-	t.pipe = make(chan Job, t.capacity)
+	t.bus = make(chan Job, t.capacity)
 	for i := 0; i < t.count; i++ {
-		go worker(t.pipe, fmt.Sprintf("worker_%d", i))
+		go t.worker(fmt.Sprintf("worker_%d", i))
 	}
 	return &t
 }
 
-func (t *TaskQueue) Add(j Job) {
-	t.pipe <- j
+func (my *TaskQueue) worker(name string) {
+	for j := range my.bus {
+		j.process(name)
+	}
+}
+
+func (my *TaskQueue) Push(j Job) {
+	go func() {
+		my.bus <- j
+	}()
+}
+
+func (my *TaskQueue) Close() {
+	close(my.bus)
 }
