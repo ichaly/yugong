@@ -1,30 +1,31 @@
 package serv
 
 import (
+	"fmt"
 	"github.com/EDDYCJY/fake-useragent"
-	"github.com/PuerkitoBio/goquery"
 	"github.com/go-resty/resty/v2"
+	"github.com/tidwall/gjson"
 	"log"
 )
 
 type Fetch struct {
-	agent string
+	Agent string
 }
 
 func NewFetch() *Fetch {
-	client := resty.New().SetDoNotParseResponse(true)
+	authKey := "EF40DC7E"
+	password := "8CEF0614705B"
+	proxyServer := "123.54.54.175:23022"
+	targetUrl := "https://ip.cn/api/index?ip=&type=0"
+	proxyUrl := fmt.Sprintf("http://%s:%s@%s", authKey, password, proxyServer)
+	//https://share.proxy.qg.net/pool?key=EF40DC7E&num=1&area=&isp=&format=json&seq=&pool=1
+	client := resty.New().SetProxy(proxyUrl)
 	f := Fetch{browser.Random()}
-	res, err := client.R().
-		SetHeader("User-Agent", browser.Random()).
-		Get("https://2023.ip138.com")
+	res, err := client.R().SetHeader("user-Agent", f.Agent).Get(targetUrl)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
-	doc, err := goquery.NewDocumentFromReader(res.RawBody())
-	if err != nil {
-		panic(err)
-	}
-	text := doc.Find("body > p:nth-child(1) > a:nth-child(1)").Text()
+	text := gjson.GetBytes(res.Body(), "ip").String()
 	log.Println(text)
 	return &f
 }
