@@ -3,6 +3,8 @@ module github.com/ichaly/yugong/core
 go 1.20
 
 require (
+	github.com/EDDYCJY/fake-useragent v0.2.0
+	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/allegro/bigcache/v3 v3.1.0
 	github.com/avast/retry-go v2.7.0+incompatible
 	github.com/bytedance/sonic v1.8.7
@@ -17,6 +19,7 @@ require (
 	github.com/spf13/viper v1.15.0
 	github.com/tidwall/gjson v1.14.4
 	github.com/unrolled/render v1.6.0
+	github.com/xuri/excelize/v2 v2.7.1
 	go.uber.org/fx v1.19.2
 	golang.org/x/crypto v0.8.0
 	golang.org/x/sync v0.1.0
@@ -26,6 +29,7 @@ require (
 )
 
 require (
+	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
@@ -64,7 +68,6 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/xuri/efp v0.0.0-20220603152613-6918739fd470 // indirect
-	github.com/xuri/excelize/v2 v2.7.1 // indirect
 	github.com/xuri/nfp v0.0.0-20220409054826-5e722a1d9e22 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/dig v1.16.1 // indirect
