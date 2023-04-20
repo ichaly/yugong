@@ -82,12 +82,12 @@ func (my *Task) process(worker string) {
 	_ = os.Remove(videoFile)
 
 	//上传文件
-	err = util.UploadFile(zipFile, my.v.Aid, fmt.Sprintf("%s___", timestamp))
+	err = util.UploadFile(zipFile, fmt.Sprintf("%s___", timestamp))
 	if err != nil {
 		return
 	}
 	//上传索引
-	err = util.UploadFile(txtFile, my.v.Aid, "index/")
+	err = util.UploadFile(txtFile, "index/")
 	if err != nil {
 		return
 	}

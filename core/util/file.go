@@ -29,7 +29,7 @@ func WriteFile(source io.Reader, target string) error {
 }
 
 // UploadFile https://market.m.taobao.com/app/tb-zhibo-app/mcn-center/daren.html#/
-func UploadFile(source, aid, padding string) error {
+func UploadFile(source, padding string) error {
 	client := resty.New()
 	fileName := path.Base(source)
 	fileBytes, err := os.ReadFile(source)
