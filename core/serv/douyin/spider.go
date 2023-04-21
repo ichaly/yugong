@@ -10,7 +10,6 @@ import (
 	"github.com/ichaly/yugong/core/data"
 	"github.com/ichaly/yugong/core/serv"
 	"github.com/ichaly/yugong/core/util"
-	"github.com/kirinlabs/HttpRequest"
 	"github.com/tidwall/gjson"
 	"gorm.io/gorm"
 	"net/http"
@@ -21,20 +20,20 @@ import (
 	"time"
 )
 
-var (
-	req *HttpRequest.Request
-)
-
-func init() {
-	req = HttpRequest.NewRequest()
-	req.SetHeaders(map[string]string{
-		"user-agent": agent,
-		"referer":    "https://www.douyin.com/user/MS4wLjABAAAA69ZgRVFTFzxrD9LqFs3jCiZEbg1F7Ox8B4SbY5_Ver8",
-	})
-	req.CheckRedirect(func(req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse /* 不进入重定向 */
-	})
-}
+//var (
+//	req *HttpRequest.Request
+//)
+//
+//func init() {
+//	req = HttpRequest.NewRequest()
+//	req.SetHeaders(map[string]string{
+//		"user-agent": agent,
+//		"referer":    "https://www.douyin.com/user/MS4wLjABAAAA69ZgRVFTFzxrD9LqFs3jCiZEbg1F7Ox8B4SbY5_Ver8",
+//	})
+//	req.CheckRedirect(func(req *http.Request, via []*http.Request) error {
+//		return http.ErrUseLastResponse /* 不进入重定向 */
+//	})
+//}
 
 type Spider struct {
 	db     *gorm.DB
@@ -48,38 +47,31 @@ func NewSpider(d *gorm.DB, s *Script, q *serv.Queue, c *base.Config) *Spider {
 }
 
 func (my *Spider) GetUserInfo(url string) (map[string]string, error) {
+	f := serv.NewFetch(my.config).NoRedirect().UseProxy()
 	reg := regexp.MustCompile(`[a-z]+://[\S]+`)
 	url = reg.FindAllString(url, -1)[0]
-	resp, err := req.Get(url)
-	defer resp.Close()
+	res, err := f.Get(url)
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode() != 302 {
-		return nil, err
+	if res.StatusCode() != 302 {
+		return nil, errors.New("not 302")
 	}
-	location := resp.Headers().Values("location")[0]
+	location := res.Header().Values("location")[0]
 	regNew := regexp.MustCompile(`(?:sec_uid=)[a-z,A-Z，0-9, _, -]+`)
 	sec_uid := strings.Replace(regNew.FindAllString(location, -1)[0], "sec_uid=", "", 1)
 	var body []byte
 	err = retry.Do(func() error {
-		res, err := req.Get(fmt.Sprintf("https://www.iesdouyin.com/web/api/v2/user/info/?sec_uid=%s", sec_uid))
-		defer res.Close()
+		res, err := f.Get(fmt.Sprintf("https://www.iesdouyin.com/web/api/v2/user/info/?sec_uid=%s", sec_uid))
 		if err != nil {
 			return err
 		}
-		body, err = res.Body()
-		if err != nil {
-			return err
-		}
+		body = res.Body()
 		if string(body) == "" {
 			return errors.New("body is empty")
 		}
 		return nil
 	})
-	if err != nil {
-		return nil, err
-	}
 	info := gjson.ParseBytes(body).Get("user_info")
 	return map[string]string{
 		"openid":                    sec_uid,

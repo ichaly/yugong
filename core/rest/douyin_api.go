@@ -1,4 +1,4 @@
-package view
+package rest
 
 import (
 	"github.com/bytedance/sonic"

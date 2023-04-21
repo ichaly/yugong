@@ -17,3 +17,8 @@ database:
   name: yugong_development
   username: postgres
   password: postgres
+
+proxy:
+  host: https://share.proxy.qg.net/pool
+  username: EF40DC7E
+  password: 8CEF0614705B

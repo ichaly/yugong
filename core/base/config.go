@@ -15,6 +15,7 @@ type Config struct {
 	Workspace string      `mapstructure:"workspace" jsonschema:"title=Workspace"`
 	Cache     *DataSource `mapstructure:"cache" jsonschema:"title=Cache"`
 	Database  *DataSource `mapstructure:"database" jsonschema:"title=DataSource"`
+	Proxy     *Proxy      `mapstructure:"proxy" jsonschema:"title=Proxy Config"`
 }
 
 type App struct {
@@ -33,6 +34,12 @@ type DataSource struct {
 	Password string       `json:"password"`
 	Sources  []DataSource `json:"sources"`
 	Replicas []DataSource `json:"replicas"`
+}
+
+type Proxy struct {
+	Host     string `json:"host"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 func NewConfig() (*Config, error) {
