@@ -57,7 +57,7 @@ func (my *Fetch) setProxy() error {
 			return err
 		}
 		uri.RawQuery = params.Encode()
-		res, err := client.R().SetHeader("user-Agent", my.Agent).Get(uri.String())
+		res, err := client.R().SetHeader("user-agent", my.Agent).Get(uri.String())
 		if err != nil {
 			return err
 		}

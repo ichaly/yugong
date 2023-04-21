@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/EDDYCJY/fake-useragent v0.2.0
-	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/allegro/bigcache/v3 v3.1.0
 	github.com/avast/retry-go v2.7.0+incompatible
 	github.com/bytedance/sonic v1.8.7
@@ -14,7 +13,6 @@ require (
 	github.com/eko/gocache/store/redis/v4 v4.2.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-resty/resty/v2 v2.7.0
-	github.com/kirinlabs/HttpRequest v1.1.1
 	github.com/redis/go-redis/v9 v9.0.3
 	github.com/spf13/viper v1.15.0
 	github.com/tidwall/gjson v1.14.4
@@ -29,6 +27,7 @@ require (
 )
 
 require (
+	github.com/PuerkitoBio/goquery v1.8.1 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect

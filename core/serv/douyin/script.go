@@ -5,11 +5,8 @@ import (
 	"github.com/dop251/goja"
 )
 
-var (
-	//go:embed lib/X-Bogus.min.js
-	bogus string
-	agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.39"
-)
+//go:embed lib/X-Bogus.min.js
+var bogus string
 
 type Script struct {
 	sign func(string, string) string
@@ -29,10 +26,6 @@ func NewScript() (*Script, error) {
 	return &Script{fn}, nil
 }
 
-func (my *Script) Sign(query string) string {
+func (my *Script) Sign(query, agent string) string {
 	return my.sign(query, agent)
-}
-
-func (my *Script) Agent() string {
-	return agent
 }

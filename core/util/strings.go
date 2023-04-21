@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func Join(elem ...string) string {
+func JoinString(elem ...string) string {
 	b := strings.Builder{}
 	for _, e := range elem {
 		b.WriteString(e)
