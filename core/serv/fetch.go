@@ -42,9 +42,9 @@ func NewFetch(c *base.Config) *Fetch {
 	return &f
 }
 
-func (my *Fetch) setProxy() error {
+func (my *Fetch) setProxy() (err error) {
 	var proxy string
-	err := retry.Do(func() error {
+	err = retry.Do(func() error {
 		client := resty.New()
 		params := url.Values{
 			"num":    []string{"1"},
@@ -64,8 +64,8 @@ func (my *Fetch) setProxy() error {
 		proxy = gjson.GetBytes(res.Body(), "data.0.server").String()
 		return nil
 	})
-	proxyUrl := fmt.Sprintf("http://%s:%s@%s", my.cong.Proxy.Username, my.cong.Proxy.Password, proxy)
-	my.client.SetProxy(proxyUrl)
+	proxy = fmt.Sprintf("http://%s:%s@%s", my.cong.Proxy.Username, my.cong.Proxy.Password, proxy)
+	my.client.SetProxy(proxy)
 	return err
 }
 
