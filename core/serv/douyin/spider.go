@@ -83,7 +83,7 @@ func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (i
 	}
 	uri, _ := url.Parse("https://www.douyin.com/aweme/v1/web/aweme/post/")
 	uri.RawQuery = params.Encode()
-	req := serv.NewFetch(my.config).SetHeaders(map[string]string{
+	req := serv.NewFetch(my.config).UseProxy().SetHeaders(map[string]string{
 		"referer": "https://www.douyin.com/",
 	}).SetCookies(map[string]string{
 		"passport_csrf_token": "c8b96614139f50d240232221b574cacb",

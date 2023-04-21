@@ -29,7 +29,7 @@ func (my noRedirectPolicy) Apply(req *http.Request, via []*http.Request) error {
 }
 
 func NewFetch(c *base.Config) *Fetch {
-	agent := browser.Random()
+	agent := browser.Chrome()
 	f := Fetch{
 		Agent: agent,
 		cong:  c, client: resty.New(),
