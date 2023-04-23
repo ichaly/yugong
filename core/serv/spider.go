@@ -11,7 +11,7 @@ type SpiderParams struct {
 }
 
 type Spider interface {
-	Support() data.Platform
+	Name() data.Platform
 	GetAuthor(url string) (map[string]string, error)
 	GetVideos(openId string, did string, aid string, min int64, max int64) (int64, int64, error)
 }

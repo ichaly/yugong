@@ -27,7 +27,7 @@ func NewDouyin(d *gorm.DB, c *base.Config, s *Script) *Douyin {
 	return &Douyin{db: d, config: c, script: s}
 }
 
-func (my Douyin) Support() data.Platform {
+func (my Douyin) Name() data.Platform {
 	return data.DouYin
 }
 

@@ -32,24 +32,14 @@ func (my *DouyinApi) Protected() bool {
 
 func (my *DouyinApi) Init(r chi.Router) {
 	r.Route("/douyin", func(r chi.Router) {
-		r.Get("/start", my.startHandler)
+		r.Get("/once", my.startHandler)
 		r.Post("/save", my.saveHandler)
-		r.Post("/sync", my.syncHandler)
 	})
 }
 
-func (my *DouyinApi) syncHandler(w http.ResponseWriter, r *http.Request) {
-	my.crontab.SyncFiles()
-	_ = my.render.JSON(w, base.OK)
-}
-
 func (my *DouyinApi) startHandler(w http.ResponseWriter, r *http.Request) {
-	var users []*data.Author
-	my.db.Find(&users)
-	for _, user := range users {
-		my.crontab.GetVideos(user)
-	}
-	_ = my.render.JSON(w, base.OK.WithData(users))
+	my.crontab.Once()
+	_ = my.render.JSON(w, base.OK)
 }
 
 func (my *DouyinApi) saveHandler(w http.ResponseWriter, r *http.Request) {
