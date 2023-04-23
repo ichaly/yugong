@@ -33,11 +33,9 @@ func NewFetch(c *base.Config) *Fetch {
 	f := Fetch{
 		Agent: agent,
 		cong:  c, client: resty.New(),
-		files:  make(map[string]string),
-		params: make(map[string]string),
-		headers: map[string]string{
-			"user-agent": agent,
-		},
+		files:   make(map[string]string),
+		params:  make(map[string]string),
+		headers: map[string]string{"user-agent": agent},
 	}
 	return &f
 }

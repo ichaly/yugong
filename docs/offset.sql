@@ -1,0 +1,1 @@
+select setval('video_id_seq', 60, false);

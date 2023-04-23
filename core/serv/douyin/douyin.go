@@ -128,7 +128,9 @@ func (my Douyin) GetVideos(openId string, did string, aid string, min int64, max
 	}
 	if len(videos) > 0 {
 		my.db.Save(videos)
-		//my.queue.Push(serv.NewTask(my.config.Workspace, my.db, v))
+		for _, v := range videos {
+			my.queue.Push(serv.NewTask(my.config.Workspace, my.db, *v))
+		}
 	}
 	min = gjson.Get(body, "min_cursor").Int()
 	max = gjson.Get(body, "max_cursor").Int()
