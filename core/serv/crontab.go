@@ -49,10 +49,7 @@ func (my *Crontab) Stop() {
 }
 
 func (my *Crontab) Once() {
-	for _, j := range my.scheduler.Jobs() {
-		j.ScheduledAtTime()
-		j.ScheduledAtTime()
-	}
+	my.scheduler.RunAll()
 }
 
 func (my *Crontab) GetSpider(p data.Platform) Spider {
