@@ -19,13 +19,12 @@ import (
 
 type Douyin struct {
 	db     *gorm.DB
-	queue  *serv.Queue
 	config *base.Config
 	script *Script
 }
 
-func NewDouyin(d *gorm.DB, q *serv.Queue, c *base.Config, s *Script) *Douyin {
-	return &Douyin{db: d, queue: q, config: c, script: s}
+func NewDouyin(d *gorm.DB, c *base.Config, s *Script) *Douyin {
+	return &Douyin{db: d, config: c, script: s}
 }
 
 func (my Douyin) Support() data.Platform {
@@ -128,9 +127,6 @@ func (my Douyin) GetVideos(openId string, did string, aid string, min int64, max
 	}
 	if len(videos) > 0 {
 		my.db.Save(videos)
-		for _, v := range videos {
-			my.queue.Push(serv.NewTask(my.config.Workspace, my.db, *v))
-		}
 	}
 	min = gjson.Get(body, "min_cursor").Int()
 	max = gjson.Get(body, "max_cursor").Int()

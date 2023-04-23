@@ -13,15 +13,16 @@ import (
 
 type Crontab struct {
 	db        *gorm.DB
+	queue     *Queue
 	config    *base.Config
 	scheduler *gocron.Scheduler
 	spiders   map[data.Platform]Spider
 }
 
-func NewCrontab(l fx.Lifecycle, d *gorm.DB, c *base.Config, s SpiderParams) *Crontab {
+func NewCrontab(l fx.Lifecycle, d *gorm.DB, c *base.Config, s SpiderParams, q *Queue) *Crontab {
 	timezone, _ := time.LoadLocation("Asia/Shanghai")
 	crontab := &Crontab{
-		db: d, config: c,
+		db: d, config: c, queue: q,
 		spiders:   make(map[data.Platform]Spider),
 		scheduler: gocron.NewScheduler(timezone),
 	}
@@ -111,4 +112,12 @@ func (my *Crontab) GetVideos(a *data.Author) {
 		}
 		my.db.Save(&a)
 	}(a)
+}
+
+func (my *Crontab) SyncFiles() {
+	var videos []*data.Video
+	my.db.Where("state", 0).Find(&videos)
+	for _, v := range videos {
+		my.queue.Push(NewTask(my.config.Workspace, my.db, *v))
+	}
 }
