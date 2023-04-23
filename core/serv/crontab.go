@@ -82,6 +82,9 @@ func (my *Crontab) Start() {
 		}
 	}
 
+	// add sync job
+	_, _ = my.scheduler.Every(1).Hour().Do(my.SyncFiles)
+
 	my.scheduler.StartAsync()
 }
 
