@@ -5,23 +5,21 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/ichaly/yugong/core/base"
 	"github.com/ichaly/yugong/core/data"
-	"github.com/ichaly/yugong/core/serv/douyin"
-	"github.com/ichaly/yugong/core/util"
+	"github.com/ichaly/yugong/core/serv"
 	"gorm.io/gorm"
 	"io"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 type DouyinApi struct {
-	db     *gorm.DB
-	render *base.Render
-	spider *douyin.Spider
+	db      *gorm.DB
+	render  *base.Render
+	crontab *serv.Crontab
 }
 
-func NewDouyinApi(d *gorm.DB, r *base.Render, s *douyin.Spider) base.Plugin {
-	return &DouyinApi{d, r, s}
+func NewDouyinApi(db *gorm.DB, rd *base.Render, c *serv.Crontab) base.Plugin {
+	return &DouyinApi{db: db, render: rd, crontab: c}
 }
 
 func (my *DouyinApi) Name() string {
@@ -40,20 +38,10 @@ func (my *DouyinApi) Init(r chi.Router) {
 }
 
 func (my *DouyinApi) startHandler(w http.ResponseWriter, r *http.Request) {
-	var users []data.Author
+	var users []*data.Author
 	my.db.Find(&users)
 	for _, user := range users {
-		var min int64
-		if user.MaxTime != nil {
-			min = user.MaxTime.UnixNano() / 1e6
-		}
-		min, err := my.spider.GetVideos(user.OpenId, user.Fid, user.Aid, min)
-		if err != nil {
-			_ = my.render.JSON(w, base.ERROR.WithError(err), base.WithCode(http.StatusBadRequest))
-			return
-		}
-		user.MaxTime = util.TimePtr(time.UnixMilli(min))
-		//my.db.Save(&user)
+		my.crontab.GetVideos(user)
 	}
 	_ = my.render.JSON(w, base.OK.WithData(users))
 }
@@ -74,7 +62,7 @@ func (my *DouyinApi) saveHandler(w http.ResponseWriter, r *http.Request) {
 		_ = my.render.JSON(w, base.ERROR.WithMessage("参数aid或url不能为空"))
 		return
 	}
-	info, err := my.spider.GetAuthor(u.Url)
+	info, err := my.crontab.GetSpider(data.DouYin).GetAuthor(u.Url)
 	if err != nil {
 		_ = my.render.JSON(w, base.ERROR.WithError(err))
 		return
@@ -84,9 +72,9 @@ func (my *DouyinApi) saveHandler(w http.ResponseWriter, r *http.Request) {
 	u.Avatar = info["avatar"]
 	u.Nickname = info["nickname"]
 	u.From = data.DouYin
-	count, err := strconv.ParseInt(info["aweme_count"], 10, 0)
+	total, err := strconv.ParseInt(info["aweme_count"], 10, 0)
 	if err == nil {
-		u.Total = count
+		u.Total = total
 	}
 	my.db.Save(&u)
 	_ = my.render.JSON(w, base.OK.WithData(u))

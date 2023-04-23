@@ -1,7 +1,6 @@
 package douyin
 
 import (
-	_ "embed"
 	"errors"
 	"fmt"
 	"github.com/avast/retry-go"
@@ -18,18 +17,22 @@ import (
 	"time"
 )
 
-type Spider struct {
+type Douyin struct {
 	db     *gorm.DB
-	script *Script
 	queue  *serv.Queue
 	config *base.Config
+	script *Script
 }
 
-func NewSpider(d *gorm.DB, s *Script, q *serv.Queue, c *base.Config) *Spider {
-	return &Spider{d, s, q, c}
+func NewDouyin(d *gorm.DB, q *serv.Queue, c *base.Config, s *Script) *Douyin {
+	return &Douyin{db: d, queue: q, config: c, script: s}
 }
 
-func (my *Spider) GetAuthor(url string) (map[string]string, error) {
+func (my Douyin) Support() data.Platform {
+	return data.DouYin
+}
+
+func (my Douyin) GetAuthor(url string) (map[string]string, error) {
 	req := serv.NewFetch(my.config).NoRedirect().UseProxy()
 	reg := regexp.MustCompile(`[a-z]+://[\S]+`)
 	url = reg.FindAllString(url, -1)[0]
@@ -71,16 +74,19 @@ func (my *Spider) GetAuthor(url string) (map[string]string, error) {
 	}, nil
 }
 
-func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (int64, error) {
+func (my Douyin) GetVideos(openId string, did string, aid string, min int64, max int64) (int64, int64, error) {
 	params := url.Values{
 		"sec_user_id": []string{openId},
 		"count":       []string{"30"},
 		"aid":         []string{"6383"},
-		"max_cursor":  []string{strconv.FormatInt(time.Now().UnixNano()/1e6, 10)},
 	}
 	if min > 0 {
 		params.Add("min_cursor", strconv.FormatInt(min, 10))
 	}
+	if max <= 0 {
+		max = time.Now().UnixNano() / 1e6
+	}
+	params.Add("max_cursor", strconv.FormatInt(max, 10))
 	uri, _ := url.Parse("https://www.douyin.com/aweme/v1/web/aweme/post/")
 	uri.RawQuery = params.Encode()
 	req := serv.NewFetch(my.config).UseProxy().SetHeaders(map[string]string{
@@ -103,7 +109,7 @@ func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (i
 		return nil
 	})
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 	list := gjson.Get(body, "aweme_list").Array()
 	var videos []*data.Video
@@ -124,5 +130,7 @@ func (my *Spider) GetVideos(openId string, did string, aid string, min int64) (i
 		my.db.Save(videos)
 		//my.queue.Push(serv.NewTask(my.config.Workspace, my.db, v))
 	}
-	return gjson.Get(body, "min_cursor").Int(), nil
+	min = gjson.Get(body, "min_cursor").Int()
+	max = gjson.Get(body, "max_cursor").Int()
+	return min, max, nil
 }

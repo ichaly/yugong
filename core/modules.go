@@ -20,8 +20,14 @@ var Modules = fx.Options(
 	),
 	fx.Provide(
 		serv.NewQueue,
+		serv.NewCrontab,
 		douyin.NewScript,
-		douyin.NewSpider,
+		douyin.NewDouyin,
+		fx.Annotate(
+			douyin.NewDouyin,
+			fx.As(new(serv.Spider)),
+			fx.ResultTags(`group:"spider"`),
+		),
 		fx.Annotated{
 			Group:  "plugin",
 			Target: rest.NewDouyinApi,
