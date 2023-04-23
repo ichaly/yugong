@@ -62,9 +62,13 @@ func (my Douyin) GetAuthor(url string) (map[string]string, error) {
 		return nil, err
 	}
 	info := gjson.Get(body, "user_info")
+	uid := info.Get("uid").String()
+	if uid == "" {
+		return nil, errors.New("get uid is empty")
+	}
 	return map[string]string{
+		"uid":                       uid,
 		"openid":                    sec_uid,
-		"uid":                       info.Get("uid").String(),
 		"nickname":                  info.Get("nickname").String(),
 		"signature":                 info.Get("signature").String(),
 		"avatar":                    info.Get("avatar_larger.url_list.0").String(),

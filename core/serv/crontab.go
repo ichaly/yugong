@@ -44,6 +44,14 @@ func NewCrontab(l fx.Lifecycle, d *gorm.DB, c *base.Config, s SpiderParams, q *Q
 	return crontab
 }
 
+func (my *Crontab) Watch(author data.Author) {
+	if author.Cron == "" {
+		_, _ = my.scheduler.Every(1).Day().At("00:00").Do(my.getVideos, author)
+	} else {
+		_, _ = my.scheduler.Cron(author.Cron).Do(my.getVideos, author)
+	}
+}
+
 func (my *Crontab) Stop() {
 	my.scheduler.Stop()
 }
@@ -67,11 +75,7 @@ func (my *Crontab) start() {
 
 	// add cron job
 	for _, author := range authors {
-		if author.Cron == "" {
-			_, _ = my.scheduler.Every(1).Day().At("00:00").Do(my.getVideos, author)
-		} else {
-			_, _ = my.scheduler.Cron(author.Cron).Do(my.getVideos, author)
-		}
+		my.Watch(author)
 	}
 
 	// add sync job
