@@ -19,7 +19,7 @@ func NewConnect(che Cache, cfg *Config) (*gorm.DB, error) {
 		return nil, err
 	}
 	err = db.AutoMigrate(
-		&data.Douyin{},
+		&data.Author{},
 		&data.Video{},
 	)
 	if err != nil {

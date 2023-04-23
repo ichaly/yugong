@@ -4,7 +4,7 @@ import "time"
 
 type Video struct {
 	Id        uint       `gorm:"AUTO_INCREMENT;comment:ID"`
-	From      Platform   `gorm:"size:50;comment:来源"` // sql:"type:ENUM('DOUYIN', 'XIAOHONGSHU')"
+	From      Platform   `gorm:"size:50;comment:来源"`
 	Vid       string     `gorm:"size:50;comment:视频ID"`
 	Url       string     `gorm:"size:500;comment:视频链接"`
 	Title     string     `gorm:"size:200;comment:视频标题"`

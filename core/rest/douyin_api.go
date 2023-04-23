@@ -40,26 +40,26 @@ func (my *DouyinApi) Init(r chi.Router) {
 }
 
 func (my *DouyinApi) startHandler(w http.ResponseWriter, r *http.Request) {
-	var users []data.Douyin
+	var users []data.Author
 	my.db.Find(&users)
 	for _, user := range users {
 		var min int64
-		if user.LastTime != nil {
-			min = user.LastTime.UnixNano() / 1e6
+		if user.MaxTime != nil {
+			min = user.MaxTime.UnixNano() / 1e6
 		}
 		min, err := my.spider.GetVideos(user.OpenId, user.Fid, user.Aid, min)
 		if err != nil {
 			_ = my.render.JSON(w, base.ERROR.WithError(err), base.WithCode(http.StatusBadRequest))
 			return
 		}
-		user.LastTime = util.TimePtr(time.UnixMilli(min))
+		user.MaxTime = util.TimePtr(time.UnixMilli(min))
 		//my.db.Save(&user)
 	}
 	_ = my.render.JSON(w, base.OK.WithData(users))
 }
 
 func (my *DouyinApi) saveHandler(w http.ResponseWriter, r *http.Request) {
-	var u data.Douyin
+	var u data.Author
 	bty, err := io.ReadAll(r.Body)
 	if err != nil {
 		_ = my.render.JSON(w, base.ERROR.WithError(err), base.WithCode(http.StatusBadRequest))
@@ -74,7 +74,7 @@ func (my *DouyinApi) saveHandler(w http.ResponseWriter, r *http.Request) {
 		_ = my.render.JSON(w, base.ERROR.WithMessage("参数aid或url不能为空"))
 		return
 	}
-	info, err := my.spider.GetUserInfo(u.Url)
+	info, err := my.spider.GetAuthor(u.Url)
 	if err != nil {
 		_ = my.render.JSON(w, base.ERROR.WithError(err))
 		return
@@ -86,7 +86,7 @@ func (my *DouyinApi) saveHandler(w http.ResponseWriter, r *http.Request) {
 	u.From = data.DouYin
 	count, err := strconv.ParseInt(info["aweme_count"], 10, 0)
 	if err == nil {
-		u.ItemCount = count
+		u.Total = count
 	}
 	my.db.Save(&u)
 	_ = my.render.JSON(w, base.OK.WithData(u))

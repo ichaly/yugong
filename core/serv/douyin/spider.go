@@ -29,7 +29,7 @@ func NewSpider(d *gorm.DB, s *Script, q *serv.Queue, c *base.Config) *Spider {
 	return &Spider{d, s, q, c}
 }
 
-func (my *Spider) GetUserInfo(url string) (map[string]string, error) {
+func (my *Spider) GetAuthor(url string) (map[string]string, error) {
 	req := serv.NewFetch(my.config).NoRedirect().UseProxy()
 	reg := regexp.MustCompile(`[a-z]+://[\S]+`)
 	url = reg.FindAllString(url, -1)[0]
