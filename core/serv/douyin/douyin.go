@@ -12,7 +12,6 @@ import (
 	"gorm.io/gorm"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -31,16 +30,16 @@ func (my Douyin) Name() data.Platform {
 	return data.DouYin
 }
 
-func (my Douyin) GetAuthor(url string) (map[string]string, error) {
+func (my Douyin) GetAuthor(author *data.Author) error {
 	req := serv.NewFetch(my.config).NoRedirect().UseProxy()
 	reg := regexp.MustCompile(`[a-z]+://[\S]+`)
-	url = reg.FindAllString(url, -1)[0]
-	res, err := req.Get(url)
+	uri := reg.FindAllString(author.Url, -1)[0]
+	res, err := req.Get(uri)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if res.StatusCode() != 302 {
-		return nil, errors.New("not 302")
+		return errors.New("not 302")
 	}
 	location := res.Header().Values("location")[0]
 	regNew := regexp.MustCompile(`(?:sec_uid=)[a-z,A-Z，0-9, _, -]+`)
@@ -59,33 +58,30 @@ func (my Douyin) GetAuthor(url string) (map[string]string, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	info := gjson.Get(body, "user_info")
-	return map[string]string{
-		"openid":                    sec_uid,
-		"uid":                       info.Get("uid").String(),
-		"nickname":                  info.Get("nickname").String(),
-		"signature":                 info.Get("signature").String(),
-		"aweme_count":               info.Get("aweme_count").String(),
-		"avatar":                    info.Get("avatar_medium.url_list.0").String(),
-		"mplatform_followers_count": info.Get("mplatform_followers_count").String(),
-	}, nil
+	if !info.Exists() {
+		return errors.New("get user info body is empty")
+	}
+	author.OpenId = sec_uid
+	author.Fid = info.Get("uid").String()
+	author.Total = info.Get("aweme_count").Int()
+	author.Nickname = info.Get("nickname").String()
+	author.Signature = info.Get("signature").String()
+	author.Avatar = info.Get("avatar_medium.url_list.0").String()
+	my.db.Save(author)
+	return nil
 }
 
-func (my Douyin) GetVideos(openId string, aid string, min int64, max int64) (int64, int64, error) {
-	params := url.Values{
-		"sec_user_id": []string{openId},
-		"count":       []string{"50"},
-		"aid":         []string{"6383"},
-	}
+func (my Douyin) GetVideos(openId string, aid string, min int64, max int64) error {
+	params := url.Values{"sec_user_id": []string{openId}, "count": []string{"50"}, "aid": []string{"6383"}}
 	if min > 0 {
-		params.Add("min_cursor", strconv.FormatInt(min, 10))
+		params.Add("min_cursor", fmt.Sprintf("%d", min))
 	}
-	if max <= 0 {
-		max = time.Now().UnixNano() / 1e6
+	if max > 0 {
+		params.Add("max_cursor", fmt.Sprintf("%d", max))
 	}
-	params.Add("max_cursor", strconv.FormatInt(max, 10))
 	uri, _ := url.Parse("https://www.douyin.com/aweme/v1/web/aweme/post/")
 	uri.RawQuery = params.Encode()
 	req := serv.NewFetch(my.config).UseProxy().SetHeaders(map[string]string{
@@ -108,10 +104,10 @@ func (my Douyin) GetVideos(openId string, aid string, min int64, max int64) (int
 		return nil
 	})
 	if err != nil {
-		return 0, 0, err
+		return err
 	}
 	list := gjson.Get(body, "aweme_list").Array()
-	var videos []*data.Video
+	var videos []data.Video
 	for _, r := range list {
 		uid := r.Get("author.uid").String()
 		vid := r.Get("aweme_id").String()
@@ -124,12 +120,20 @@ func (my Douyin) GetVideos(openId string, aid string, min int64, max int64) (int
 			From: data.DouYin, Title: title, Url: video, Fid: uid, Aid: aid, Cover: cover,
 			Vid: vid, UploadAt: util.TimePtr(uploadTime), SourceAt: time.UnixMilli(createTime * 1000),
 		}
-		videos = append(videos, &v)
+		videos = append(videos, v)
 	}
 	if len(videos) > 0 {
 		my.db.Save(videos)
+		if max > 0 {
+			max = gjson.Get(body, "max_cursor").Int()
+		}
+		if min > 0 {
+			min = gjson.Get(body, "min_cursor").Int()
+		}
+		//err := my.GetVideos(openId, aid, min, max)
+		//if err != nil {
+		//	return err
+		//}
 	}
-	min = gjson.Get(body, "min_cursor").Int()
-	max = gjson.Get(body, "max_cursor").Int()
-	return min, max, nil
+	return nil
 }

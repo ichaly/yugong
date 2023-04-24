@@ -5,7 +5,7 @@ import "time"
 type Video struct {
 	Id        int64      `gorm:"AUTO_INCREMENT;comment:ID"`
 	From      Platform   `gorm:"size:50;comment:来源"`
-	Vid       string     `gorm:"size:50;comment:视频ID"`
+	Vid       string     `gorm:"size:50;unique_index;comment:视频ID"`
 	Url       string     `gorm:"size:500;comment:视频链接"`
 	Title     string     `gorm:"size:200;comment:视频标题"`
 	Cover     string     `gorm:"size:500;comment:封面"`

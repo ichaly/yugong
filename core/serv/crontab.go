@@ -5,7 +5,6 @@ import (
 	"github.com/go-co-op/gocron"
 	"github.com/ichaly/yugong/core/base"
 	"github.com/ichaly/yugong/core/data"
-	"github.com/ichaly/yugong/core/util"
 	"go.uber.org/fx"
 	"gorm.io/gorm"
 	"time"
@@ -96,33 +95,26 @@ func (my *Crontab) start() {
 }
 
 func (my *Crontab) getVideos(authorId int64) {
-	var a data.Author
-	my.db.First(&a, authorId)
+	var author data.Author
+	my.db.First(&author, authorId)
+	var max *time.Time
 	var oldMin, oldMax int64
-	if a.MaxTime != nil {
-		oldMax = a.MaxTime.UnixNano() / 1e6
+	row := my.db.Model(&data.Video{}).Select("max(source_at) as max").Where("aid = ?", author.Aid).Row()
+	_ = row.Scan(&max)
+	if max != nil {
+		oldMin = max.UnixNano() / 1e6
+	} else {
+		oldMax = time.Now().UnixNano() / 1e6
 	}
-	if a.MinTime != nil {
-		oldMin = a.MinTime.UnixNano() / 1e6
-	}
-	newMin, newMax, err := my.spiders[a.From].GetVideos(
-		a.OpenId, a.Aid, oldMax, oldMin,
-	)
+	err := my.spiders[author.From].GetVideos(author.OpenId, author.Aid, oldMax, oldMin)
 	if err != nil {
 		return
 	}
-	if newMin < oldMin || oldMin == 0 {
-		a.MinTime = util.TimePtr(time.UnixMilli(newMin))
-	}
-	if newMax > oldMax {
-		a.MaxTime = util.TimePtr(time.UnixMilli(newMax))
-	}
-	my.db.Save(&a)
 }
 
 func (my *Crontab) syncFiles() {
 	var videos []data.Video
-	my.db.Where("state", 0).Find(&videos)
+	my.db.Where("state", 0).Order("source_at desc").Find(&videos)
 	for _, v := range videos {
 		my.queue.Push(NewTask(my.config.Workspace, my.db, v))
 	}

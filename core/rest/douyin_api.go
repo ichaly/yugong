@@ -58,18 +58,11 @@ func (my *DouyinApi) saveHandler(w http.ResponseWriter, r *http.Request) {
 		_ = my.render.JSON(w, base.ERROR.WithMessage("参数aid或url不能为空"))
 		return
 	}
-	info, err := my.crontab.GetSpider(data.DouYin).GetAuthor(u.Url)
+	err = my.crontab.GetSpider(data.DouYin).GetAuthor(&u)
 	if err != nil {
 		_ = my.render.JSON(w, base.ERROR.WithError(err))
 		return
 	}
-	u.From = data.DouYin
-	u.Fid = info["uid"]
-	u.OpenId = info["openid"]
-	u.Avatar = info["avatar"]
-	u.Nickname = info["nickname"]
-	u.Signature = info["signature"]
-	my.db.Save(&u)
 	my.crontab.Watch(u)
 	_ = my.render.JSON(w, base.OK.WithData(u))
 }
