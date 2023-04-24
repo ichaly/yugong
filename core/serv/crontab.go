@@ -95,9 +95,9 @@ func (my *Crontab) start() {
 	my.scheduler.StartAsync()
 }
 
-func (my *Crontab) getVideos(aid int64) {
+func (my *Crontab) getVideos(authorId int64) {
 	var a data.Author
-	my.db.First(&a, aid)
+	my.db.First(&a, authorId)
 	var oldMin, oldMax int64
 	if a.MaxTime != nil {
 		oldMax = a.MaxTime.UnixNano() / 1e6
