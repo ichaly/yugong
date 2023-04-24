@@ -63,9 +63,9 @@ func (my Douyin) GetAuthor(url string) (map[string]string, error) {
 	}
 	info := gjson.Get(body, "user_info")
 	uid := info.Get("uid").String()
-	if uid == "" {
-		return nil, errors.New("get uid is empty")
-	}
+	//if uid == "" {
+	//	return nil, errors.New("get uid is empty")
+	//}
 	return map[string]string{
 		"uid":                       uid,
 		"openid":                    sec_uid,
@@ -77,7 +77,7 @@ func (my Douyin) GetAuthor(url string) (map[string]string, error) {
 	}, nil
 }
 
-func (my Douyin) GetVideos(openId string, did string, aid string, min int64, max int64) (int64, int64, error) {
+func (my Douyin) GetVideos(openId string, aid string, min int64, max int64) (int64, int64, error) {
 	params := url.Values{
 		"sec_user_id": []string{openId},
 		"count":       []string{"30"},
@@ -117,6 +117,7 @@ func (my Douyin) GetVideos(openId string, did string, aid string, min int64, max
 	list := gjson.Get(body, "aweme_list").Array()
 	var videos []*data.Video
 	for _, r := range list {
+		uid := r.Get("author.uid").String()
 		vid := r.Get("aweme_id").String()
 		title := r.Get("desc").String()
 		video := r.Get("video.play_addr.url_list.0").String()
@@ -124,7 +125,7 @@ func (my Douyin) GetVideos(openId string, did string, aid string, min int64, max
 		createTime := r.Get("create_time").Int()
 		uploadTime := time.Now()
 		v := data.Video{
-			From: data.DouYin, Title: title, Url: video, Fid: did, Aid: aid, Cover: cover,
+			From: data.DouYin, Title: title, Url: video, Fid: uid, Aid: aid, Cover: cover,
 			Vid: vid, UploadAt: util.TimePtr(uploadTime), SourceAt: time.UnixMilli(createTime * 1000),
 		}
 		videos = append(videos, &v)

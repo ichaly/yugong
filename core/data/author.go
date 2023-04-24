@@ -7,7 +7,6 @@ type Author struct {
 	From      Platform   `gorm:"size:50;comment:来源"`
 	OpenId    string     `gorm:"size:100;comment:抖音OpenId"`
 	Aid       string     `gorm:"size:100;comment:虚拟账号"`
-	Fid       string     `gorm:"size:100;comment:抖音账号"`
 	Url       string     `gorm:"size:200;comment:分享链接"`
 	Avatar    string     `gorm:"size:200;comment:头像"`
 	Nickname  string     `gorm:"size:50;comment:昵称"`

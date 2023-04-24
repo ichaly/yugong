@@ -64,7 +64,6 @@ func (my *DouyinApi) saveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	u.From = data.DouYin
-	u.Fid = info["uid"]
 	u.OpenId = info["openid"]
 	u.Avatar = info["avatar"]
 	u.Nickname = info["nickname"]

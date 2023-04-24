@@ -93,7 +93,7 @@ func (my *Crontab) getVideos(a data.Author) {
 		oldMin = a.MinTime.UnixNano() / 1e6
 	}
 	newMin, newMax, err := my.spiders[a.From].GetVideos(
-		a.OpenId, a.Fid, a.Aid, oldMin, oldMax,
+		a.OpenId, a.Aid, oldMin, oldMax,
 	)
 	if err != nil {
 		return
