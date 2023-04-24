@@ -76,7 +76,7 @@ func (my Douyin) GetAuthor(url string) (map[string]string, error) {
 func (my Douyin) GetVideos(openId string, aid string, min int64, max int64) (int64, int64, error) {
 	params := url.Values{
 		"sec_user_id": []string{openId},
-		"count":       []string{"30"},
+		"count":       []string{"50"},
 		"aid":         []string{"6383"},
 	}
 	if min > 0 {

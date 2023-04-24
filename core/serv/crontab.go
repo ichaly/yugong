@@ -49,11 +49,11 @@ func NewCrontab(l fx.Lifecycle, d *gorm.DB, c *base.Config, s SpiderParams, q *Q
 	return crontab
 }
 
-func (my *Crontab) Watch(author data.Author) {
-	if author.Cron == "" {
-		_, _ = my.scheduler.Tag(GET_VIDEOS).Every(1).Day().At("00:00").Do(my.getVideos, author)
+func (my *Crontab) Watch(a data.Author) {
+	if a.Cron == "" {
+		_, _ = my.scheduler.Tag(GET_VIDEOS).Every(1).Day().At("00:00").Do(my.getVideos, a.Id)
 	} else {
-		_, _ = my.scheduler.Tag(GET_VIDEOS).Cron(author.Cron).Do(my.getVideos, author)
+		_, _ = my.scheduler.Tag(GET_VIDEOS).Cron(a.Cron).Do(my.getVideos, a.Id)
 	}
 }
 
@@ -95,7 +95,9 @@ func (my *Crontab) start() {
 	my.scheduler.StartAsync()
 }
 
-func (my *Crontab) getVideos(a data.Author) {
+func (my *Crontab) getVideos(aid int64) {
+	var a data.Author
+	my.db.First(&a, aid)
 	var oldMin, oldMax int64
 	if a.MaxTime != nil {
 		oldMax = a.MaxTime.UnixNano() / 1e6
@@ -104,7 +106,7 @@ func (my *Crontab) getVideos(a data.Author) {
 		oldMin = a.MinTime.UnixNano() / 1e6
 	}
 	newMin, newMax, err := my.spiders[a.From].GetVideos(
-		a.OpenId, a.Aid, oldMin, oldMax,
+		a.OpenId, a.Aid, oldMax, oldMin,
 	)
 	if err != nil {
 		return

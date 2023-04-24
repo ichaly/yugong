@@ -9,7 +9,6 @@ import (
 	"gorm.io/gorm"
 	"io"
 	"net/http"
-	"strconv"
 )
 
 type DouyinApi struct {
@@ -70,10 +69,6 @@ func (my *DouyinApi) saveHandler(w http.ResponseWriter, r *http.Request) {
 	u.Avatar = info["avatar"]
 	u.Nickname = info["nickname"]
 	u.Signature = info["signature"]
-	total, err := strconv.ParseInt(info["aweme_count"], 10, 0)
-	if err == nil {
-		u.Total = total
-	}
 	my.db.Save(&u)
 	my.crontab.Watch(u)
 	_ = my.render.JSON(w, base.OK.WithData(u))

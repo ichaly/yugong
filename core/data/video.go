@@ -3,7 +3,7 @@ package data
 import "time"
 
 type Video struct {
-	Id        uint       `gorm:"AUTO_INCREMENT;comment:ID"`
+	Id        int64      `gorm:"AUTO_INCREMENT;comment:ID"`
 	From      Platform   `gorm:"size:50;comment:来源"`
 	Vid       string     `gorm:"size:50;comment:视频ID"`
 	Url       string     `gorm:"size:500;comment:视频链接"`

@@ -3,7 +3,7 @@ package data
 import "time"
 
 type Author struct {
-	Id        uint       `gorm:"AUTO_INCREMENT;comment:ID"`
+	Id        int64      `gorm:"AUTO_INCREMENT;comment:ID"`
 	From      Platform   `gorm:"size:50;comment:来源"`
 	OpenId    string     `gorm:"size:100;comment:抖音OpenId"`
 	Aid       string     `gorm:"size:100;comment:虚拟账号"`
@@ -12,7 +12,7 @@ type Author struct {
 	Avatar    string     `gorm:"size:200;comment:头像"`
 	Nickname  string     `gorm:"size:50;comment:昵称"`
 	Signature string     `gorm:"size:200;comment:个性签名"`
-	Total     int64      `gorm:"size:50;comment:作品数"`
+	Total     int64      `gorm:"size:50;comment:初始数量"`
 	Cron      string     `gorm:"size:50;comment:定时任务"`
 	MaxTime   *time.Time `gorm:"comment:最后同步时间"`
 	MinTime   *time.Time `gorm:"comment:起始同步时间"`
