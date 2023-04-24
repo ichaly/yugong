@@ -38,8 +38,9 @@ func (my *DouyinApi) Init(r chi.Router) {
 }
 
 func (my *DouyinApi) startHandler(w http.ResponseWriter, r *http.Request) {
-	my.crontab.Once()
-	_ = my.render.JSON(w, base.OK)
+	tag := r.URL.Query().Get("tag")
+	my.crontab.Once(tag)
+	_ = my.render.JSON(w, base.OK.WithMessage("操作成功"))
 }
 
 func (my *DouyinApi) saveHandler(w http.ResponseWriter, r *http.Request) {

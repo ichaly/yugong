@@ -2,20 +2,20 @@ package base
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 )
 
 var (
-	OK        = newResult(http.StatusOK)                  // 通用成功
-	FORBIDDEN = newResult(http.StatusForbidden)           // 无权限
-	ERROR     = newResult(http.StatusInternalServerError) // 通用错误
+	OK        = newResult(http.StatusOK, "操作成功")                  // 通用成功
+	FORBIDDEN = newResult(http.StatusForbidden, "无权操作")           // 无权限
+	ERROR     = newResult(http.StatusInternalServerError, "操作失败") // 通用错误
 )
 
 type result struct {
-	Code   int                      `json:"code"`             // 错误码
-	Data   interface{}              `json:"data,omitempty"`   // 返回数据
-	Errors []map[string]interface{} `json:"errors,omitempty"` // 错误信息
+	Code    int                      `json:"code"`              // 错误码
+	Data    interface{}              `json:"data,omitempty"`    // 返回数据
+	Errors  []map[string]interface{} `json:"errors,omitempty"`  // 错误信息
+	Message string                   `json:"message,omitempty"` // 提示信息
 }
 
 // WithError 自定义错误信息
@@ -33,11 +33,10 @@ func (res *result) WithError(errors ...error) result {
 }
 
 func (res *result) WithMessage(msgs ...string) result {
-	var errs []error
 	for _, m := range msgs {
-		errs = append(errs, errors.New(m))
+		res.Message = m
 	}
-	return res.WithError(errs...)
+	return *res
 }
 
 // WithData 追加响应数据
@@ -64,9 +63,10 @@ func (res *result) ToString() string {
 }
 
 // newResult 构造函数
-func newResult(code int) *result {
+func newResult(code int, msg string) *result {
 	return &result{
-		Code: code,
-		Data: nil,
+		Code:    code,
+		Message: msg,
+		Data:    nil,
 	}
 }

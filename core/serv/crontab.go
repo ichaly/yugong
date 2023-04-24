@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+const (
+	GET_VIDEOS = "getVideos"
+	SYNC_FILES = "syncFiles"
+)
+
 type Crontab struct {
 	db        *gorm.DB
 	queue     *Queue
@@ -46,9 +51,9 @@ func NewCrontab(l fx.Lifecycle, d *gorm.DB, c *base.Config, s SpiderParams, q *Q
 
 func (my *Crontab) Watch(author data.Author) {
 	if author.Cron == "" {
-		_, _ = my.scheduler.Every(1).Day().At("00:00").Do(my.getVideos, author)
+		_, _ = my.scheduler.Tag(GET_VIDEOS).Every(1).Day().At("00:00").Do(my.getVideos, author)
 	} else {
-		_, _ = my.scheduler.Cron(author.Cron).Do(my.getVideos, author)
+		_, _ = my.scheduler.Tag(GET_VIDEOS).Cron(author.Cron).Do(my.getVideos, author)
 	}
 }
 
@@ -56,8 +61,14 @@ func (my *Crontab) Stop() {
 	my.scheduler.Stop()
 }
 
-func (my *Crontab) Once() {
-	my.scheduler.RunAll()
+func (my *Crontab) Once(tag string) {
+	if tag == "" {
+		my.scheduler.RunAll()
+	} else if tag == GET_VIDEOS {
+		_ = my.scheduler.RunByTag(GET_VIDEOS)
+	} else if tag == SYNC_FILES {
+		_ = my.scheduler.RunByTag(SYNC_FILES)
+	}
 }
 
 func (my *Crontab) GetSpider(p data.Platform) Spider {
@@ -79,7 +90,7 @@ func (my *Crontab) start() {
 	}
 
 	// add sync job
-	_, _ = my.scheduler.Every(1).Hour().Do(my.syncFiles)
+	_, _ = my.scheduler.Tag(SYNC_FILES).Every(1).Hour().Do(my.syncFiles)
 
 	my.scheduler.StartAsync()
 }
