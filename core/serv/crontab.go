@@ -5,6 +5,7 @@ import (
 	"github.com/go-co-op/gocron"
 	"github.com/ichaly/yugong/core/base"
 	"github.com/ichaly/yugong/core/data"
+	"github.com/ichaly/yugong/core/util"
 	"go.uber.org/fx"
 	"gorm.io/gorm"
 	"time"
@@ -97,16 +98,16 @@ func (my *Crontab) start() {
 func (my *Crontab) getVideos(authorId int64) {
 	var author data.Author
 	my.db.First(&author, authorId)
-	var max *time.Time
-	var oldMin, oldMax int64
-	row := my.db.Model(&data.Video{}).Select("max(source_at) as max").Where("aid = ?", author.Aid).Row()
-	_ = row.Scan(&max)
-	if max != nil {
-		oldMin = max.UnixNano() / 1e6
+	var maxTime time.Time
+	row := my.db.Model(&data.Video{}).Select("maxTime(source_at) as maxTime").Where("aid = ?", author.Aid).Row()
+	_ = row.Scan(&maxTime)
+	var min, max *time.Time
+	if maxTime.IsZero() {
+		max = util.TimePtr(time.Now())
 	} else {
-		oldMax = time.Now().UnixNano() / 1e6
+		min = util.TimePtr(maxTime)
 	}
-	err := my.spiders[author.From].GetVideos(author.OpenId, author.Aid, oldMax, oldMin)
+	err := my.spiders[author.From].GetVideos(author.OpenId, author.Aid, max, min)
 	if err != nil {
 		return
 	}

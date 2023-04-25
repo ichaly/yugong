@@ -64,6 +64,7 @@ func (my Douyin) GetAuthor(author *data.Author) error {
 	if !info.Exists() {
 		return errors.New("get user info body is empty")
 	}
+	author.From = data.DouYin
 	author.OpenId = sec_uid
 	author.Fid = info.Get("uid").String()
 	author.Total = info.Get("aweme_count").Int()
@@ -74,13 +75,13 @@ func (my Douyin) GetAuthor(author *data.Author) error {
 	return nil
 }
 
-func (my Douyin) GetVideos(openId string, aid string, min int64, max int64) error {
+func (my Douyin) GetVideos(openId string, aid string, max *time.Time, min *time.Time) error {
 	params := url.Values{"sec_user_id": []string{openId}, "count": []string{"50"}, "aid": []string{"6383"}}
-	if min > 0 {
-		params.Add("min_cursor", fmt.Sprintf("%d", min))
+	if min != nil {
+		params.Add("min_cursor", fmt.Sprintf("%d", min.UnixNano()/1e6))
 	}
-	if max > 0 {
-		params.Add("max_cursor", fmt.Sprintf("%d", max))
+	if max != nil {
+		params.Add("max_cursor", fmt.Sprintf("%d", max.UnixNano()/1e6))
 	}
 	uri, _ := url.Parse("https://www.douyin.com/aweme/v1/web/aweme/post/")
 	uri.RawQuery = params.Encode()
@@ -124,11 +125,11 @@ func (my Douyin) GetVideos(openId string, aid string, min int64, max int64) erro
 	}
 	if len(videos) > 0 {
 		my.db.Save(videos)
-		if max > 0 {
-			max = gjson.Get(body, "max_cursor").Int()
+		if max != nil {
+			max = util.TimePtr(time.UnixMilli(gjson.Get(body, "max_cursor").Int() * 1000))
 		}
-		if min > 0 {
-			min = gjson.Get(body, "min_cursor").Int()
+		if min != nil {
+			min = util.TimePtr(time.UnixMilli(gjson.Get(body, "min_cursor").Int() * 1000))
 		}
 		//err := my.GetVideos(openId, aid, min, max)
 		//if err != nil {

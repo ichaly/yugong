@@ -3,6 +3,7 @@ package serv
 import (
 	"github.com/ichaly/yugong/core/data"
 	"go.uber.org/fx"
+	"time"
 )
 
 type SpiderParams struct {
@@ -13,5 +14,5 @@ type SpiderParams struct {
 type Spider interface {
 	Name() data.Platform
 	GetAuthor(author *data.Author) error
-	GetVideos(openId string, aid string, min int64, max int64) error
+	GetVideos(openId string, aid string, max *time.Time, min *time.Time) error
 }
