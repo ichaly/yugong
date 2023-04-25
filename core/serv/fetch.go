@@ -2,10 +2,10 @@ package serv
 
 import (
 	"fmt"
-	"github.com/EDDYCJY/fake-useragent"
 	"github.com/avast/retry-go"
 	"github.com/go-resty/resty/v2"
 	"github.com/ichaly/yugong/core/base"
+	"github.com/mzccddkk/fake-useragent"
 	"github.com/tidwall/gjson"
 	"net/http"
 	"net/url"
@@ -29,7 +29,8 @@ func (my noRedirectPolicy) Apply(req *http.Request, via []*http.Request) error {
 }
 
 func NewFetch(c *base.Config) *Fetch {
-	agent := browser.Chrome()
+	agent := useragent.MacOSX()
+	agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.39"
 	f := Fetch{
 		Agent: agent,
 		cong:  c, client: resty.New(),
