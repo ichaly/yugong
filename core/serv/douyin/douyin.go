@@ -67,7 +67,6 @@ func (my Douyin) GetAuthor(author *data.Author) error {
 	author.From = data.DouYin
 	author.OpenId = sec_uid
 	author.Fid = info.Get("uid").String()
-	author.Total = info.Get("aweme_count").Int()
 	author.Nickname = info.Get("nickname").String()
 	author.Signature = info.Get("signature").String()
 	author.Avatar = info.Get("avatar_medium.url_list.0").String()
@@ -115,11 +114,13 @@ func (my Douyin) GetVideos(openId string, aid string, max *time.Time, min *time.
 		title := r.Get("desc").String()
 		video := r.Get("video.play_addr.url_list.0").String()
 		cover := r.Get("video.cover.url_list|@reverse|0").String()
+		width := r.Get("video.width").Int()
+		height := r.Get("video.height").Int()
 		createTime := r.Get("create_time").Int()
 		uploadTime := time.Now()
 		v := data.Video{
-			From: data.DouYin, Title: title, Url: video, Fid: uid, Aid: aid, Cover: cover,
-			Vid: vid, UploadAt: util.TimePtr(uploadTime), SourceAt: time.UnixMilli(createTime * 1000),
+			From: data.DouYin, Vid: vid, Url: video, Title: title, Cover: cover, Width: width, Height: height,
+			Fid: uid, Aid: aid, UploadAt: util.TimePtr(uploadTime), SourceAt: time.UnixMilli(createTime * 1000),
 		}
 		videos = append(videos, v)
 	}
