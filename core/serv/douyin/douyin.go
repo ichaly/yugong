@@ -75,10 +75,13 @@ func (my Douyin) GetAuthor(author *data.Author) error {
 }
 
 func (my Douyin) GetVideos(openId, aid string, max, min, start *time.Time, total, count int) error {
-	if start == nil && total == 0 {
+	if max != nil && start == nil && total == 0 {
 		return nil
 	}
-	page := fmt.Sprintf("%d", util.Min(10, total-count))
+	page := "50"
+	if max != nil {
+		page = fmt.Sprintf("%d", util.Min(50, total-count))
+	}
 	params := url.Values{"count": []string{page}, "sec_user_id": []string{openId}, "aid": []string{"6383"}}
 	if min != nil {
 		params.Add("min_cursor", fmt.Sprintf("%d", min.UnixNano()/1e6))
@@ -124,21 +127,24 @@ func (my Douyin) GetVideos(openId, aid string, max, min, start *time.Time, total
 		createTime := r.Get("create_time").Int() * 1000
 		uploadTime := time.Now()
 
-		if start != nil && start.UnixMilli() >= createTime {
-			// 到达了开始时间
-			continue
-		} else if total != -1 && count+i >= total {
-			// 达到了同步数量
-			break
-		}
-		// 如果是置顶视频，要检测是否已经存在
-		if isTop {
-			var exists bool
-			my.db.Model(&data.Video{}).Select("count(vid) > 0").Where("vid = ?", vid).Find(&exists)
-			if exists {
+		if max != nil {
+			if start != nil && start.UnixMilli() >= createTime {
+				// 到达了开始时间
 				continue
+			} else if total != -1 && count+i >= total {
+				// 达到了同步数量
+				break
+			}
+			// 如果是置顶视频，要检测是否已经存在
+			if isTop {
+				var exists bool
+				my.db.Model(&data.Video{}).Select("count(vid) > 0").Where("vid = ?", vid).Find(&exists)
+				if exists {
+					continue
+				}
 			}
 		}
+
 		v := data.Video{
 			From: data.DouYin, Vid: vid, Url: video, Title: title, Cover: cover, Width: width, Height: height,
 			Fid: uid, Aid: aid, UploadAt: util.TimePtr(uploadTime), SourceAt: time.UnixMilli(createTime),
