@@ -74,8 +74,12 @@ func (my Douyin) GetAuthor(author *data.Author) error {
 	return nil
 }
 
-func (my Douyin) GetVideos(openId string, aid string, max *time.Time, min *time.Time) error {
-	params := url.Values{"sec_user_id": []string{openId}, "count": []string{"50"}, "aid": []string{"6383"}}
+func (my Douyin) GetVideos(openId, aid string, max, min, start *time.Time, total, count int) error {
+	if start == nil && total == 0 {
+		return nil
+	}
+	page := fmt.Sprintf("%d", util.Min(10, total-count))
+	params := url.Values{"count": []string{page}, "sec_user_id": []string{openId}, "aid": []string{"6383"}}
 	if min != nil {
 		params.Add("min_cursor", fmt.Sprintf("%d", min.UnixNano()/1e6))
 	}
@@ -107,8 +111,8 @@ func (my Douyin) GetVideos(openId string, aid string, max *time.Time, min *time.
 		return err
 	}
 	list := gjson.Get(body, "aweme_list").Array()
-	var videos []data.Video
-	for _, r := range list {
+	videos := make([]data.Video, 0)
+	for i, r := range list {
 		uid := r.Get("author.uid").String()
 		vid := r.Get("aweme_id").String()
 		title := r.Get("desc").String()
@@ -116,26 +120,56 @@ func (my Douyin) GetVideos(openId string, aid string, max *time.Time, min *time.
 		cover := r.Get("video.cover.url_list|@reverse|0").String()
 		width := r.Get("video.width").Int()
 		height := r.Get("video.height").Int()
-		createTime := r.Get("create_time").Int()
+		isTop := r.Get("video.is_top").Bool()
+		createTime := r.Get("create_time").Int() * 1000
 		uploadTime := time.Now()
+
+		if start != nil && start.UnixMilli() >= createTime {
+			// 到达了开始时间
+			continue
+		} else if total != -1 && count+i >= total {
+			// 达到了同步数量
+			break
+		}
+		// 如果是置顶视频，要检测是否已经存在
+		if isTop {
+			var exists bool
+			my.db.Model(&data.Video{}).Select("count(vid) > 0").Where("vid = ?", vid).Find(&exists)
+			if exists {
+				continue
+			}
+		}
 		v := data.Video{
 			From: data.DouYin, Vid: vid, Url: video, Title: title, Cover: cover, Width: width, Height: height,
-			Fid: uid, Aid: aid, UploadAt: util.TimePtr(uploadTime), SourceAt: time.UnixMilli(createTime * 1000),
+			Fid: uid, Aid: aid, UploadAt: util.TimePtr(uploadTime), SourceAt: time.UnixMilli(createTime),
 		}
-		videos = append(videos, v)
+		videos = append([]data.Video{v}, videos...)
 	}
-	if len(videos) > 0 {
-		my.db.Save(videos)
+	size := len(videos)
+	if size > 0 {
+		count = count + size
 		if max != nil {
-			max = util.TimePtr(time.UnixMilli(gjson.Get(body, "max_cursor").Int() * 1000))
+			max = util.TimePtr(time.UnixMilli(gjson.Get(body, "max_cursor").Int()))
+			err := my.GetVideos(openId, aid, max, min, start, total, count)
+			if err != nil {
+				return err
+			}
+			err = my.db.Save(videos).Error
+			if err != nil {
+				return err
+			}
 		}
 		if min != nil {
-			min = util.TimePtr(time.UnixMilli(gjson.Get(body, "min_cursor").Int() * 1000))
+			min = util.TimePtr(time.UnixMilli(gjson.Get(body, "min_cursor").Int()))
+			err := my.db.Save(videos).Error
+			if err != nil {
+				return err
+			}
+			err = my.GetVideos(openId, aid, max, min, start, total, count)
+			if err != nil {
+				return err
+			}
 		}
-		//err := my.GetVideos(openId, aid, min, max)
-		//if err != nil {
-		//	return err
-		//}
 	}
 	return nil
 }

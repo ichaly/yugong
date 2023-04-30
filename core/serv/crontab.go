@@ -107,7 +107,9 @@ func (my *Crontab) getVideos(authorId int64) {
 	} else {
 		min = util.TimePtr(maxTime)
 	}
-	err := my.spiders[author.From].GetVideos(author.OpenId, author.Aid, max, min)
+	err := my.spiders[author.From].GetVideos(
+		author.OpenId, author.Aid, max, min, author.Start, author.Total, 0,
+	)
 	if err != nil {
 		return
 	}
