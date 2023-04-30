@@ -123,9 +123,18 @@ func (my Douyin) GetVideos(openId, aid string, max, min, start *time.Time, total
 		cover := r.Get("video.cover.url_list|@reverse|0").String()
 		width := r.Get("video.width").Int()
 		height := r.Get("video.height").Int()
-		isTop := r.Get("video.is_top").Bool()
+		isTop := r.Get("video.is_top").Int() == 1
 		createTime := r.Get("create_time").Int() * 1000
 		uploadTime := time.Now()
+
+		// 如果是置顶视频，要检测是否已经存在
+		if isTop {
+			//var exists bool
+			//my.db.Model(&data.Video{}).Select("count(vid) > 0").Where("vid = ?", vid).Find(&exists)
+			//if exists {
+			continue
+			//}
+		}
 
 		if max != nil {
 			if start != nil && start.UnixMilli() >= createTime {
@@ -134,14 +143,6 @@ func (my Douyin) GetVideos(openId, aid string, max, min, start *time.Time, total
 			} else if total != -1 && count+i >= total {
 				// 达到了同步数量
 				break
-			}
-			// 如果是置顶视频，要检测是否已经存在
-			if isTop {
-				var exists bool
-				my.db.Model(&data.Video{}).Select("count(vid) > 0").Where("vid = ?", vid).Find(&exists)
-				if exists {
-					continue
-				}
 			}
 		}
 

@@ -99,7 +99,7 @@ func (my *Crontab) getVideos(authorId int64) {
 	var author data.Author
 	my.db.First(&author, authorId)
 	var maxTime time.Time
-	row := my.db.Model(&data.Video{}).Select("maxTime(source_at) as maxTime").Where("aid = ?", author.Aid).Row()
+	row := my.db.Model(&data.Video{}).Select("max(source_at) as maxTime").Where("aid = ?", author.Aid).Row()
 	_ = row.Scan(&maxTime)
 	var min, max *time.Time
 	if maxTime.IsZero() {
@@ -117,7 +117,7 @@ func (my *Crontab) getVideos(authorId int64) {
 
 func (my *Crontab) syncFiles() {
 	var videos []data.Video
-	my.db.Where("state", 0).Order("source_at desc").Find(&videos)
+	my.db.Where("state", 0).Order("source_at asc").Find(&videos)
 	for _, v := range videos {
 		my.queue.Push(NewTask(my.config.Workspace, my.db, v))
 	}
