@@ -23,7 +23,7 @@ var Modules = fx.Options(
 		serv.NewQueue,
 		serv.NewCrontab,
 		douyin.NewScript,
-		douyin.NewDouyin,
+		xiaohongshu.NewScript,
 		fx.Annotate(
 			douyin.NewDouyin,
 			fx.As(new(serv.Spider)),

@@ -1,6 +1,7 @@
 package xiaohongshu
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/avast/retry-go"
@@ -18,10 +19,11 @@ import (
 type XiaoHongShu struct {
 	db     *gorm.DB
 	config *base.Config
+	script *Script
 }
 
-func NewXiaoHongShu(d *gorm.DB, c *base.Config) *XiaoHongShu {
-	return &XiaoHongShu{db: d, config: c}
+func NewXiaoHongShu(d *gorm.DB, c *base.Config, s *Script) *XiaoHongShu {
+	return &XiaoHongShu{db: d, config: c, script: s}
 }
 
 func (my XiaoHongShu) Name() data.Platform {
@@ -76,21 +78,20 @@ func (my XiaoHongShu) GetVideos(openId, aid string, max, min *string, start *tim
 	if max != nil {
 		page = fmt.Sprintf("%d", util.Min(30, total-count))
 	}
-	params := url.Values{"num": []string{page}, "user_id": []string{openId}}
+	params := url.Values{"num": []string{page}, "user_id": []string{openId}, "cursor": []string{""}}
 	if max != nil {
 		params.Add("cursor", fmt.Sprintf("%s", *max))
-	} else {
-		params.Add("cursor", "")
 	}
+	uri, _ := url.Parse("https://edith.xiaohongshu.com/api/sns/web/v1/user_posted")
+	uri.RawQuery = params.Encode()
+	token := my.script.Sign(fmt.Sprintf("%s?%s", uri.Path, uri.RawQuery), "")
 	req := serv.NewFetch(my.config).UseProxy().SetHeaders(map[string]string{
 		"referer": "https://www.xiaohongshu.com/",
-		"x-t":     "1682961327003",
-		"x-s":     "OiOvsgqvslZJ1B5i0gvbO6aBsgTLsgwUZ2aB0gVUOlA3",
+		"x-t":     token["X-t"],
+		"x-s":     token["X-s"],
 	}).SetCookies(map[string]string{
 		"web_session": "040069b5511a2a147061d4f17a364b16fb5f6c",
 	})
-	uri, _ := url.Parse("https://edith.xiaohongshu.com/api/sns/web/v1/user_posted")
-	uri.RawQuery = params.Encode()
 	var body string
 	err := retry.Do(func() error {
 		res, err := req.Get(uri.String())
@@ -110,7 +111,7 @@ func (my XiaoHongShu) GetVideos(openId, aid string, max, min *string, start *tim
 	videos := make([]data.Video, 0)
 	for i, r := range list {
 		typ := r.Get("type").String()
-		if typ == "video" {
+		if typ != "video" {
 			continue
 		}
 		isTop := r.Get("interact_info.sticky").Bool()
@@ -165,22 +166,25 @@ func (my XiaoHongShu) GetVideos(openId, aid string, max, min *string, start *tim
 
 func (my XiaoHongShu) detail(v *data.Video) error {
 	params := map[string]string{"source_note_id": v.Vid}
+	uri, _ := url.Parse("https://edith.xiaohongshu.com/api/sns/web/v1/feed")
+	raw, _ := json.Marshal(params)
+	token := my.script.Sign(uri.Path, string(raw))
 	req := serv.NewFetch(my.config).UseProxy().SetHeaders(map[string]string{
 		"referer": "https://www.xiaohongshu.com/",
-		"x-t":     "1682947892201",
-		"x-s":     "0YsC1iavZ2w6O6M+slkkOiT+OYFp1laB0Y1Csidvs6M3",
+		"x-t":     token["X-t"],
+		"x-s":     token["X-s"],
 	}).SetCookies(map[string]string{
 		"web_session": "040069b5511a2a147061d4f17a364b16fb5f6c",
 	}).SetParams(params)
 	var body string
 	err := retry.Do(func() error {
-		res, err := req.Get("https://edith.xiaohongshu.com/api/sns/web/v1/feed")
+		res, err := req.Json(uri.String())
 		if err != nil {
 			return err
 		}
 		body = res.String()
 		if body == "" {
-			return errors.New("get videos body is empty")
+			return errors.New("get video detail body is empty")
 		}
 		return nil
 	})
