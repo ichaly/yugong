@@ -1,0 +1,58 @@
+{
+  "code": 0,
+  "success": true,
+  "msg": "成功",
+  "data": {
+    "extra_info": {
+      "fstatus": "none"
+    },
+    "result": {
+      "success": true,
+      "code": 0,
+      "message": "success"
+    },
+    "basic_info": {
+      "imageb": "https://sns-avatar-qc.xhscdn.com/avatar/637e14b298495549306cb7ce.jpg?imageView2/2/w/540/format/webp",
+      "nickname": "天琳",
+      "images": "https://sns-avatar-qc.xhscdn.com/avatar/637e14b298495549306cb7ce.jpg?imageView2/2/w/360/format/webp",
+      "red_id": "tianlin0129",
+      "gender": 1,
+      "ip_location": "广东",
+      "desc": "❤学舞❤tianlinjiaowu\n❤商务❤tianlinshangwu"
+    },
+    "interactions": [
+      {
+        "name": "关注",
+        "count": "15",
+        "type": "follows"
+      },
+      {
+        "type": "fans",
+        "name": "粉丝",
+        "count": "12172"
+      },
+      {
+        "name": "获赞与收藏",
+        "count": "171287",
+        "type": "interaction"
+      }
+    ],
+    "tags": [
+      {
+        "icon": "http://ci.xiaohongshu.com/icons/user/gender-female-v1.png",
+        "tagType": "info"
+      },
+      {
+        "tagType": "profession",
+        "name": "舞蹈博主"
+      },
+      {
+        "name": "舞者",
+        "tagType": "profession"
+      }
+    ],
+    "tab_public": {
+      "collection": true
+    }
+  }
+}

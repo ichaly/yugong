@@ -5,6 +5,7 @@ import (
 	"github.com/ichaly/yugong/core/rest"
 	"github.com/ichaly/yugong/core/serv"
 	"github.com/ichaly/yugong/core/serv/douyin"
+	"github.com/ichaly/yugong/core/serv/xiaohongshu"
 	"go.uber.org/fx"
 )
 
@@ -28,9 +29,14 @@ var Modules = fx.Options(
 			fx.As(new(serv.Spider)),
 			fx.ResultTags(`group:"spider"`),
 		),
+		fx.Annotate(
+			xiaohongshu.NewXiaoHongShu,
+			fx.As(new(serv.Spider)),
+			fx.ResultTags(`group:"spider"`),
+		),
 		fx.Annotated{
 			Group:  "plugin",
-			Target: rest.NewDouyinApi,
+			Target: rest.NewBlogApi,
 		},
 	),
 	fx.Invoke(base.Bootstrap),

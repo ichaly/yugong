@@ -11,38 +11,38 @@ import (
 	"net/http"
 )
 
-type DouyinApi struct {
+type BlogApi struct {
 	db      *gorm.DB
 	render  *base.Render
 	crontab *serv.Crontab
 }
 
-func NewDouyinApi(db *gorm.DB, rd *base.Render, c *serv.Crontab) base.Plugin {
-	return &DouyinApi{db: db, render: rd, crontab: c}
+func NewBlogApi(db *gorm.DB, rd *base.Render, c *serv.Crontab) base.Plugin {
+	return &BlogApi{db: db, render: rd, crontab: c}
 }
 
-func (my *DouyinApi) Name() string {
-	return "DouyinApi"
+func (my *BlogApi) Name() string {
+	return "BlogApi"
 }
 
-func (my *DouyinApi) Protected() bool {
+func (my *BlogApi) Protected() bool {
 	return false
 }
 
-func (my *DouyinApi) Init(r chi.Router) {
-	r.Route("/douyin", func(r chi.Router) {
+func (my *BlogApi) Init(r chi.Router) {
+	r.Route("/blog", func(r chi.Router) {
 		r.Get("/once", my.startHandler)
 		r.Post("/save", my.saveHandler)
 	})
 }
 
-func (my *DouyinApi) startHandler(w http.ResponseWriter, r *http.Request) {
+func (my *BlogApi) startHandler(w http.ResponseWriter, r *http.Request) {
 	tag := r.URL.Query().Get("tag")
 	my.crontab.Once(tag)
 	_ = my.render.JSON(w, base.OK.WithMessage("操作成功"))
 }
 
-func (my *DouyinApi) saveHandler(w http.ResponseWriter, r *http.Request) {
+func (my *BlogApi) saveHandler(w http.ResponseWriter, r *http.Request) {
 	var u data.Author
 	bty, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -54,11 +54,16 @@ func (my *DouyinApi) saveHandler(w http.ResponseWriter, r *http.Request) {
 		_ = my.render.JSON(w, base.ERROR.WithError(err), base.WithCode(http.StatusBadRequest))
 		return
 	}
-	if u.Aid == "" || u.Url == "" {
-		_ = my.render.JSON(w, base.ERROR.WithMessage("参数aid或url不能为空"))
+	if u.Aid == "" || u.Url == "" || u.From == "" {
+		_ = my.render.JSON(w, base.ERROR.WithMessage("参数aid,url,from不能为空"))
 		return
 	}
-	err = my.crontab.GetSpider(data.DouYin).GetAuthor(&u)
+	spider := my.crontab.GetSpider(u.From)
+	if spider == nil {
+		_ = my.render.JSON(w, base.ERROR.WithMessage("不支持的平台"))
+		return
+	}
+	err = spider.GetAuthor(&u)
 	if err != nil {
 		_ = my.render.JSON(w, base.ERROR.WithError(err))
 		return
