@@ -17,6 +17,7 @@ type Author struct {
 	Start     *time.Time `gorm:"comment:初始时间"`
 	CreatedAt time.Time  `gorm:"comment:创建时间"`
 	UpdatedAt time.Time  `gorm:"comment:更新时间"`
+	Disable   bool       `gorm:"comment:是否禁用"`
 }
 
 func (Author) TableName() string {

@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -74,7 +75,7 @@ func (my Douyin) GetAuthor(author *data.Author) error {
 	return nil
 }
 
-func (my Douyin) GetVideos(openId, aid string, max, min, start *time.Time, total, count int) error {
+func (my Douyin) GetVideos(openId, aid string, max, min *string, start *time.Time, total, count int) error {
 	if max != nil && start == nil && total == 0 {
 		return nil
 	}
@@ -84,10 +85,10 @@ func (my Douyin) GetVideos(openId, aid string, max, min, start *time.Time, total
 	}
 	params := url.Values{"count": []string{page}, "sec_user_id": []string{openId}, "aid": []string{"6383"}}
 	if min != nil {
-		params.Add("min_cursor", fmt.Sprintf("%d", min.UnixNano()/1e6))
+		params.Add("min_cursor", *min)
 	}
 	if max != nil {
-		params.Add("max_cursor", fmt.Sprintf("%d", max.UnixNano()/1e6))
+		params.Add("max_cursor", *max)
 	}
 	uri, _ := url.Parse("https://www.douyin.com/aweme/v1/web/aweme/post/")
 	uri.RawQuery = params.Encode()
@@ -156,7 +157,7 @@ func (my Douyin) GetVideos(openId, aid string, max, min, start *time.Time, total
 	if size > 0 {
 		count = count + size
 		if max != nil {
-			max = util.TimePtr(time.UnixMilli(gjson.Get(body, "max_cursor").Int()))
+			max = util.StringPtr(strconv.FormatInt(gjson.Get(body, "max_cursor").Int(), 10))
 			err := my.GetVideos(openId, aid, max, min, start, total, count)
 			if err != nil {
 				return err
@@ -167,7 +168,7 @@ func (my Douyin) GetVideos(openId, aid string, max, min, start *time.Time, total
 			}
 		}
 		if min != nil {
-			min = util.TimePtr(time.UnixMilli(gjson.Get(body, "min_cursor").Int()))
+			min = util.StringPtr(strconv.FormatInt(gjson.Get(body, "min_cursor").Int(), 10))
 			err := my.db.Save(videos).Error
 			if err != nil {
 				return err

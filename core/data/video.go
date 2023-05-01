@@ -13,6 +13,7 @@ type Video struct {
 	Cover     string     `gorm:"size:500;comment:封面"`
 	Fid       string     `gorm:"size:100;comment:外部账号"`
 	Aid       string     `gorm:"size:100;comment:虚拟账号"`
+	IsTop     bool       `gorm:"comment:是否置顶"`
 	State     int        `gorm:"comment:状态"`
 	UploadAt  *time.Time `gorm:"comment:上传时间"`
 	SourceAt  time.Time  `gorm:"comment:原始时间"`

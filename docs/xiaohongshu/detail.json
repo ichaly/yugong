@@ -1,0 +1,137 @@
+{
+  "success": true,
+  "msg": "成功",
+  "data": {
+    "cursor_score": "",
+    "items": [
+      {
+        "id": "63ff46b1000000001300b1b9",
+        "model_type": "note",
+        "note_card": {
+          "image_list": [
+            {
+              "url": "https://sns-img-hw.xhscdn.com/92029768-90eb-7faf-cc0a-5fa1e345d1d5",
+              "trace_id": "1000g00824bufu58fc0004aglpuvpm4dorqg8c18",
+              "file_id": "92029768-90eb-7faf-cc0a-5fa1e345d1d5",
+              "height": 1080,
+              "width": 1440
+            }
+          ],
+          "video": {
+            "media": {
+              "video_id": 136233089976652274,
+              "video": {
+                "biz_name": 110,
+                "biz_id": "280348280914489785",
+                "duration": 41,
+                "md5": "f52771fbdeb0b4537f8a243c845e0bcd",
+                "hdr_type": 0,
+                "drm_type": 0,
+                "stream_types": [
+                  259
+                ]
+              },
+              "stream": {
+                "h264": [
+                  {
+                    "default_stream": 0,
+                    "volume": 0,
+                    "fps": 30,
+                    "video_codec": "h264",
+                    "audio_codec": "aac",
+                    "vmaf": -1,
+                    "format": "mp4",
+                    "duration": 40467,
+                    "video_duration": 40466,
+                    "audio_bitrate": 56030,
+                    "master_url": "http://sns-video-bd.xhscdn.com/stream/110/259/01e3ff4606b651f201037103869d2c8c4e_259.mp4",
+                    "hdr_type": 0,
+                    "stream_desc": "WM_X264_MP4",
+                    "video_bitrate": 445324,
+                    "audio_channels": 2,
+                    "width": 1280,
+                    "size": 2569746,
+                    "avg_bitrate": 508018,
+                    "stream_type": 259,
+                    "ssim": 0,
+                    "quality_type": "HD",
+                    "weight": 62,
+                    "backup_urls": [
+                      "http://sns-video-qc.xhscdn.com/stream/110/259/01e3ff4606b651f201037103869d2c8c4e_259.mp4?sign=582158921444e3478db1ec0ff75704b2&t=64513254",
+                      "http://sns-video-hw.xhscdn.com/stream/110/259/01e3ff4606b651f201037103869d2c8c4e_259.mp4",
+                      "http://sns-video-al.xhscdn.com/stream/110/259/01e3ff4606b651f201037103869d2c8c4e_259.mp4"
+                    ],
+                    "psnr": 0,
+                    "height": 720,
+                    "audio_duration": 40427,
+                    "rotate": 0
+                  }
+                ],
+                "h265": [],
+                "av1": []
+              }
+            },
+            "image": {
+              "thumbnail_fileid": "110/0/01e3ff4606b651f200100001869d2c36b9_0.webp",
+              "first_frame_fileid": "110/0/01e3ff4606b651f200100001869d2c314a_0.jpg"
+            },
+            "capa": {
+              "duration": 40
+            },
+            "consumer": {
+              "origin_video_key": "pre_post/1000g0cg24bu40rcfk0004aglpuvpm4dol7t15h0"
+            }
+          },
+          "tag_list": [
+            {
+              "id": "595a2ccacd30d8040a19617c",
+              "name": "舞蹈",
+              "type": "topic"
+            },
+            {
+              "id": "5f3cdd500000000001002203",
+              "name": "水袖舞",
+              "type": "topic"
+            },
+            {
+              "id": "5bfb7ca9f75afc00010c7a82",
+              "name": "典狱司",
+              "type": "topic"
+            },
+            {
+              "id": "61068bde000000000100625f",
+              "name": "张启山二月红",
+              "type": "topic"
+            }
+          ],
+          "desc": "   ",
+          "type": "video",
+          "title": "张启山，你回头看看",
+          "user": {
+            "user_id": "5b797f9b6bd7380001d511b8",
+            "nickname": "天琳",
+            "avatar": "https://sns-avatar-qc.xhscdn.com/avatar/637e14b298495549306cb7ce.jpg"
+          },
+          "interact_info": {
+            "share_count": "25",
+            "followed": false,
+            "liked": false,
+            "liked_count": "9621",
+            "collected": false,
+            "collected_count": "2509",
+            "comment_count": "46"
+          },
+          "at_user_list": [],
+          "time": 1677674161000,
+          "last_update_time": 1677674162000,
+          "note_id": "63ff46b1000000001300b1b9",
+          "share_info": {
+            "un_share": false
+          }
+        }
+      }
+    ],
+    "current_time": 1682954651140
+  },
+  "code": 0
+}
