@@ -120,7 +120,7 @@ func (my XiaoHongShu) GetVideos(openId, aid string, more bool, cursor *string, s
 		}
 
 		vid := r.Get("note_id").String()
-		cover := r.Get("cover.url").String()
+		cover := fmt.Sprintf("https://sns-img-bd.xhscdn.com/%s", r.Get("cover.trace_id").String())
 		width := r.Get("cover.width").Int()
 		height := r.Get("cover.height").Int()
 		title := r.Get("display_title").String()
