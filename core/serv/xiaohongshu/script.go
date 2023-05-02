@@ -9,7 +9,8 @@ import (
 var bogus string
 
 type Script struct {
-	sign func(string, string) map[string]string
+	sign func(string, interface{}) map[string]string
+	vm   *goja.Runtime
 }
 
 func NewScript() (*Script, error) {
@@ -18,14 +19,17 @@ func NewScript() (*Script, error) {
 	if err != nil {
 		return nil, err
 	}
-	var fn func(string, string) map[string]string
+	var fn func(string, interface{}) map[string]string
 	err = vm.ExportTo(vm.Get("sign"), &fn)
 	if err != nil {
 		return nil, err
 	}
-	return &Script{fn}, nil
+	return &Script{fn, vm}, nil
 }
 
-func (my *Script) Sign(query, data string) map[string]string {
-	return my.sign(query, data)
+func (my *Script) Sign(query string, data map[string]string) map[string]string {
+	if data == nil {
+		return my.sign(query, nil)
+	}
+	return my.sign(query, my.vm.ToValue(data))
 }

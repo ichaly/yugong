@@ -75,20 +75,19 @@ func (my Douyin) GetAuthor(author *data.Author) error {
 	return nil
 }
 
-func (my Douyin) GetVideos(openId, aid string, max, min *string, start *time.Time, total, count int) error {
-	if max != nil && start == nil && total == 0 {
+func (my Douyin) GetVideos(openId, aid string, more bool, cursor *string, start *time.Time, total, count int) error {
+	if more && start == nil && total == 0 {
 		return nil
 	}
 	page := "50"
-	if max != nil {
+	if more {
 		page = fmt.Sprintf("%d", util.Min(50, total-count))
 	}
 	params := url.Values{"count": []string{page}, "sec_user_id": []string{openId}, "aid": []string{"6383"}}
-	if min != nil {
-		params.Add("min_cursor", *min)
-	}
-	if max != nil {
-		params.Add("max_cursor", *max)
+	if more {
+		params.Add("max_cursor", *cursor)
+	} else {
+		params.Add("min_cursor", *cursor)
 	}
 	uri, _ := url.Parse("https://www.douyin.com/aweme/v1/web/aweme/post/")
 	uri.RawQuery = params.Encode()
@@ -137,7 +136,7 @@ func (my Douyin) GetVideos(openId, aid string, max, min *string, start *time.Tim
 			//}
 		}
 
-		if max != nil {
+		if more {
 			if start != nil && start.UnixMilli() >= createTime {
 				// 到达了开始时间
 				continue
@@ -156,9 +155,9 @@ func (my Douyin) GetVideos(openId, aid string, max, min *string, start *time.Tim
 	size := len(videos)
 	if size > 0 {
 		count = count + size
-		if max != nil {
-			max = util.StringPtr(strconv.FormatInt(gjson.Get(body, "max_cursor").Int(), 10))
-			err := my.GetVideos(openId, aid, max, min, start, total, count)
+		if more {
+			cursor = util.StringPtr(strconv.FormatInt(gjson.Get(body, "max_cursor").Int(), 10))
+			err := my.GetVideos(openId, aid, more, cursor, start, total, count)
 			if err != nil {
 				return err
 			}
@@ -166,14 +165,13 @@ func (my Douyin) GetVideos(openId, aid string, max, min *string, start *time.Tim
 			if err != nil {
 				return err
 			}
-		}
-		if min != nil {
-			min = util.StringPtr(strconv.FormatInt(gjson.Get(body, "min_cursor").Int(), 10))
+		} else {
+			cursor = util.StringPtr(strconv.FormatInt(gjson.Get(body, "min_cursor").Int(), 10))
 			err := my.db.Save(videos).Error
 			if err != nil {
 				return err
 			}
-			err = my.GetVideos(openId, aid, max, min, start, total, count)
+			err = my.GetVideos(openId, aid, more, cursor, start, total, count)
 			if err != nil {
 				return err
 			}

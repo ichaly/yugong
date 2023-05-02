@@ -1,7 +1,6 @@
 package xiaohongshu
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/avast/retry-go"
@@ -70,21 +69,21 @@ func (my XiaoHongShu) GetAuthor(author *data.Author) error {
 	return nil
 }
 
-func (my XiaoHongShu) GetVideos(openId, aid string, max, min *string, start *time.Time, total, count int) error {
-	if max != nil && start == nil && total == 0 {
+func (my XiaoHongShu) GetVideos(openId, aid string, more bool, cursor *string, start *time.Time, total, count int) error {
+	if more && start == nil && total == 0 {
 		return nil
 	}
 	page := "30"
-	if max != nil {
+	if more {
 		page = fmt.Sprintf("%d", util.Min(30, total-count))
 	}
 	params := url.Values{"num": []string{page}, "user_id": []string{openId}, "cursor": []string{""}}
-	if max != nil {
-		params.Add("cursor", fmt.Sprintf("%s", *max))
+	if cursor != nil {
+		params.Set("cursor", fmt.Sprintf("%s", *cursor))
 	}
 	uri, _ := url.Parse("https://edith.xiaohongshu.com/api/sns/web/v1/user_posted")
 	uri.RawQuery = params.Encode()
-	token := my.script.Sign(fmt.Sprintf("%s?%s", uri.Path, uri.RawQuery), "")
+	token := my.script.Sign(fmt.Sprintf("%s?%s", uri.Path, uri.RawQuery), nil)
 	req := serv.NewFetch(my.config).UseProxy().SetHeaders(map[string]string{
 		"referer": "https://www.xiaohongshu.com/",
 		"x-t":     token["X-t"],
@@ -127,7 +126,7 @@ func (my XiaoHongShu) GetVideos(openId, aid string, max, min *string, start *tim
 		title := r.Get("display_title").String()
 		uploadTime := time.Now()
 		v := data.Video{
-			From: data.DouYin, Vid: vid, Title: title, Cover: cover, Width: width,
+			From: data.XiaoHongShu, Vid: vid, Title: title, Cover: cover, Width: width,
 			Height: height, Fid: openId, Aid: aid, UploadAt: util.TimePtr(uploadTime),
 		}
 		err := my.detail(&v)
@@ -135,7 +134,7 @@ func (my XiaoHongShu) GetVideos(openId, aid string, max, min *string, start *tim
 			return err
 		}
 
-		if max != nil {
+		if more {
 			if start != nil && start.UnixMilli() >= v.SourceAt.UnixMilli() {
 				// 到达了开始时间
 				continue
@@ -149,16 +148,15 @@ func (my XiaoHongShu) GetVideos(openId, aid string, max, min *string, start *tim
 	size := len(videos)
 	if size > 0 {
 		count = count + size
-		if max != nil {
-			max = util.StringPtr(gjson.Get(body, "data.cursor").String())
-			err := my.GetVideos(openId, aid, max, min, start, total, count)
-			if err != nil {
-				return err
-			}
-			err = my.db.Save(videos).Error
-			if err != nil {
-				return err
-			}
+		cursor = util.StringPtr(gjson.Get(body, "data.cursor").String())
+		err := my.GetVideos(openId, aid, more, cursor, start, total, count)
+		if err != nil {
+			return err
+		}
+		err = my.db.Save(videos).Error
+		if err != nil {
+			panic(err)
+			return err
 		}
 	}
 	return nil
@@ -167,8 +165,7 @@ func (my XiaoHongShu) GetVideos(openId, aid string, max, min *string, start *tim
 func (my XiaoHongShu) detail(v *data.Video) error {
 	params := map[string]string{"source_note_id": v.Vid}
 	uri, _ := url.Parse("https://edith.xiaohongshu.com/api/sns/web/v1/feed")
-	raw, _ := json.Marshal(params)
-	token := my.script.Sign(uri.Path, string(raw))
+	token := my.script.Sign(uri.Path, params)
 	req := serv.NewFetch(my.config).UseProxy().SetHeaders(map[string]string{
 		"referer": "https://www.xiaohongshu.com/",
 		"x-t":     token["X-t"],

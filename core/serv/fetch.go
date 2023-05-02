@@ -1,7 +1,6 @@
 package serv
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/avast/retry-go"
 	"github.com/go-resty/resty/v2"
@@ -118,12 +117,11 @@ func (my *Fetch) Get(uri string) (*resty.Response, error) {
 }
 
 func (my *Fetch) Json(uri string) (*resty.Response, error) {
-	body, _ := json.Marshal(my.params)
 	return my.client.R().
 		EnableTrace().
 		SetCookies(my.cookies).
 		SetHeaders(my.headers).
-		SetBody(body).
+		SetBody(my.params).
 		Post(uri)
 }
 
