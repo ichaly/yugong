@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/avast/retry-go"
 	"github.com/go-resty/resty/v2"
 	"io"
 	"os"
@@ -54,14 +55,25 @@ func UploadFile(source, padding string) error {
 }
 
 func DownloadFile(url string, target string) (err error) {
-	client := resty.New().SetDoNotParseResponse(true)
-	res, err := client.R().Get(url)
+	err = retry.Do(func() error {
+		_, err = resty.New().R().SetOutput(target).Get(url)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return
 	}
-	err = WriteFile(res.RawBody(), target)
-	if err != nil {
-		return
-	}
+	//client := resty.New().SetDoNotParseResponse(true)
+	//client.SetOutputDirectory(filepath.Dir(target))
+	//res, err := client.R().Get(url)
+	//if err != nil {
+	//	return
+	//}
+	//err = WriteFile(res.RawBody(), target)
+	//if err != nil {
+	//	return
+	//}
 	return
 }
