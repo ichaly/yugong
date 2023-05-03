@@ -99,25 +99,23 @@ func (my *Crontab) start() {
 func (my *Crontab) getVideos(authorId int64) {
 	var author data.Author
 	my.db.First(&author, authorId)
-	var cursor *string
-	more := false
+	var cursor, finish *string
 	if author.From == data.DouYin {
 		var maxTime time.Time
 		row := my.db.Model(&data.Video{}).Select("max(source_at) as maxTime").Where("aid = ?", author.Aid).Row()
 		_ = row.Scan(&maxTime)
-		if maxTime.IsZero() {
-			more = true
-			maxTime = time.Now()
+		cursor = util.StringPtr(strconv.FormatInt(time.Now().UnixMilli(), 10))
+		if !maxTime.IsZero() {
+			finish = util.StringPtr(strconv.FormatInt(maxTime.UnixMilli(), 10))
 		}
-		cursor = util.StringPtr(strconv.FormatInt(maxTime.UnixMilli(), 10))
 	} else if author.From == data.XiaoHongShu {
-		row := my.db.Model(&data.Video{}).Select("vid").Where("aid = ?", author.Aid).
+		row := my.db.Model(&data.Video{}).
+			Select("vid").Where("aid = ?", author.Aid).
 			Order("source_at desc").Limit(1)
-		_ = row.Scan(cursor)
-		more = cursor == nil
+		_ = row.Scan(&finish)
 	}
 	err := my.spiders[author.From].GetVideos(
-		author.OpenId, author.Aid, more, cursor, author.Start, author.Total, 0,
+		author.OpenId, author.Aid, cursor, finish, author.Start, author.Total, 0,
 	)
 	if err != nil {
 		return

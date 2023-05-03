@@ -75,19 +75,16 @@ func (my Douyin) GetAuthor(author *data.Author) error {
 	return nil
 }
 
-func (my Douyin) GetVideos(openId, aid string, more bool, cursor *string, start *time.Time, total, count int) error {
-	if more && start == nil && total == 0 {
+func (my Douyin) GetVideos(openId, aid string, cursor, finish *string, start *time.Time, total, count int) error {
+	if finish == nil && start == nil && total == 0 {
 		return nil
 	}
-	page := "50"
-	if more {
-		page = fmt.Sprintf("%d", util.Min(50, total-count))
-	}
-	params := url.Values{"count": []string{page}, "sec_user_id": []string{openId}, "aid": []string{"6383"}}
-	if more {
+	params := url.Values{"count": []string{"50"}, "sec_user_id": []string{openId}, "aid": []string{"6383"}}
+	if cursor != nil {
 		params.Add("max_cursor", *cursor)
-	} else {
-		params.Add("min_cursor", *cursor)
+	}
+	if finish != nil {
+		params.Add("min_cursor", *finish)
 	}
 	uri, _ := url.Parse("https://www.douyin.com/aweme/v1/web/aweme/post/")
 	uri.RawQuery = params.Encode()
@@ -116,6 +113,11 @@ func (my Douyin) GetVideos(openId, aid string, more bool, cursor *string, start 
 	list := gjson.Get(body, "aweme_list").Array()
 	videos := make([]data.Video, 0)
 	for i, r := range list {
+		isTop := r.Get("video.is_top").Int() == 1
+		// TODO: 置顶数据暂时忽略
+		if isTop {
+			continue
+		}
 		uid := r.Get("author.uid").String()
 		vid := r.Get("aweme_id").String()
 		title := r.Get("desc").String()
@@ -123,58 +125,41 @@ func (my Douyin) GetVideos(openId, aid string, more bool, cursor *string, start 
 		cover := r.Get("video.cover.url_list|@reverse|0").String()
 		width := r.Get("video.width").Int()
 		height := r.Get("video.height").Int()
-		isTop := r.Get("video.is_top").Int() == 1
 		createTime := r.Get("create_time").Int() * 1000
-		uploadTime := time.Now()
 
-		// 如果是置顶视频，要检测是否已经存在
-		if isTop {
-			//var exists bool
-			//my.db.Model(&data.Video{}).Select("count(vid) > 0").Where("vid = ?", vid).Find(&exists)
-			//if exists {
-			continue
-			//}
-		}
-
-		if more {
-			if start != nil && start.UnixMilli() >= createTime {
-				// 到达了开始时间
-				continue
-			} else if total != -1 && count+i >= total {
-				// 达到了同步数量
+		if finish != nil {
+			num, err := strconv.ParseInt(*finish, 10, 64)
+			if err != nil {
+				num = 0
+			}
+			if createTime <= num {
 				break
 			}
+		} else if start != nil && start.UnixMilli() >= createTime {
+			// 到达了开始时间
+			break
+		} else if total != -1 && count+i >= total {
+			// 达到了同步数量
+			break
 		}
 
 		v := data.Video{
 			From: data.DouYin, Vid: vid, Url: video, Title: title, Cover: cover, Width: width, Height: height,
-			Fid: uid, Aid: aid, UploadAt: util.TimePtr(uploadTime), SourceAt: time.UnixMilli(createTime),
+			Fid: uid, Aid: aid, UploadAt: util.TimePtr(time.Now()), SourceAt: time.UnixMilli(createTime),
 		}
 		videos = append([]data.Video{v}, videos...)
 	}
 	size := len(videos)
 	if size > 0 {
 		count = count + size
-		if more {
-			cursor = util.StringPtr(strconv.FormatInt(gjson.Get(body, "max_cursor").Int(), 10))
-			err := my.GetVideos(openId, aid, more, cursor, start, total, count)
-			if err != nil {
-				return err
-			}
-			err = my.db.Save(videos).Error
-			if err != nil {
-				return err
-			}
-		} else {
-			cursor = util.StringPtr(strconv.FormatInt(gjson.Get(body, "min_cursor").Int(), 10))
-			err := my.db.Save(videos).Error
-			if err != nil {
-				return err
-			}
-			err = my.GetVideos(openId, aid, more, cursor, start, total, count)
-			if err != nil {
-				return err
-			}
+		cursor = util.StringPtr(strconv.FormatInt(gjson.Get(body, "max_cursor").Int(), 10))
+		err := my.GetVideos(openId, aid, cursor, finish, start, total, count)
+		if err != nil {
+			return err
+		}
+		err = my.db.Save(videos).Error
+		if err != nil {
+			return err
 		}
 	}
 	return nil

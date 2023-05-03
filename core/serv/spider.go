@@ -14,5 +14,5 @@ type SpiderParams struct {
 type Spider interface {
 	Name() data.Platform
 	GetAuthor(author *data.Author) error
-	GetVideos(openId, aid string, more bool, cursor *string, start *time.Time, total, count int) error
+	GetVideos(openId, aid string, cursor, finish *string, start *time.Time, total, count int) error
 }

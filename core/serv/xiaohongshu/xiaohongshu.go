@@ -69,15 +69,11 @@ func (my XiaoHongShu) GetAuthor(author *data.Author) error {
 	return nil
 }
 
-func (my XiaoHongShu) GetVideos(openId, aid string, more bool, cursor *string, start *time.Time, total, count int) error {
-	if more && start == nil && total == 0 {
+func (my XiaoHongShu) GetVideos(openId, aid string, cursor, finish *string, start *time.Time, total, count int) error {
+	if finish == nil && start == nil && total == 0 {
 		return nil
 	}
-	page := "30"
-	if more {
-		page = fmt.Sprintf("%d", util.Min(30, total-count))
-	}
-	params := url.Values{"num": []string{page}, "user_id": []string{openId}, "cursor": []string{""}}
+	params := url.Values{"num": []string{"30"}, "user_id": []string{openId}, "cursor": []string{""}}
 	if cursor != nil {
 		params.Set("cursor", fmt.Sprintf("%s", *cursor))
 	}
@@ -114,7 +110,7 @@ func (my XiaoHongShu) GetVideos(openId, aid string, more bool, cursor *string, s
 			continue
 		}
 		isTop := r.Get("interact_info.sticky").Bool()
-		// 如果是置顶视频，要检测是否已经存在
+		// TODO: 置顶数据暂时忽略
 		if isTop {
 			continue
 		}
@@ -124,38 +120,38 @@ func (my XiaoHongShu) GetVideos(openId, aid string, more bool, cursor *string, s
 		width := r.Get("cover.width").Int()
 		height := r.Get("cover.height").Int()
 		title := r.Get("display_title").String()
-		uploadTime := time.Now()
 		v := data.Video{
 			From: data.XiaoHongShu, Vid: vid, Title: title, Cover: cover, Width: width,
-			Height: height, Fid: openId, Aid: aid, UploadAt: util.TimePtr(uploadTime),
+			Height: height, Fid: openId, Aid: aid, UploadAt: util.TimePtr(time.Now()),
 		}
 		err := my.detail(&v)
 		if err != nil {
 			return err
 		}
-
-		if more {
-			if start != nil && start.UnixMilli() >= v.SourceAt.UnixMilli() {
-				// 到达了开始时间
-				continue
-			} else if total != -1 && count+i >= total {
-				// 达到了同步数量
+		if finish != nil {
+			if strings.Compare(vid, *finish) <= 0 {
 				break
 			}
+		} else if start != nil && start.UnixMilli() >= v.SourceAt.UnixMilli() {
+			// 到达了开始时间
+			continue
+		} else if total != -1 && count+i >= total {
+			// 达到了同步数量
+			break
 		}
 		videos = append([]data.Video{v}, videos...)
 	}
+
 	size := len(videos)
 	if size > 0 {
 		count = count + size
 		cursor = util.StringPtr(gjson.Get(body, "data.cursor").String())
-		err := my.GetVideos(openId, aid, more, cursor, start, total, count)
+		err := my.GetVideos(openId, aid, cursor, finish, start, total, count)
 		if err != nil {
 			return err
 		}
 		err = my.db.Save(videos).Error
 		if err != nil {
-			panic(err)
 			return err
 		}
 	}
