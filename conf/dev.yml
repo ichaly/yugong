@@ -1,7 +1,7 @@
 workspace: /Users/Chaly/Downloads/YuGone/
 
 app:
-  name: "Jing Wei App"
+  name: "Yu Gong App"
   port: 3000
 
 cache:
