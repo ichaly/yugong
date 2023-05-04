@@ -74,7 +74,10 @@ func (my XiaoHongShu) GetVideos(openId, aid string, cursor, finish *string, star
 	if finish == nil && start == nil && total == 0 {
 		return nil
 	}
-	params := url.Values{"num": []string{"30"}, "user_id": []string{openId}, "cursor": []string{""}}
+	params := url.Values{"num": []string{"50"}, "user_id": []string{openId}, "cursor": []string{""}}
+	if finish == nil && total > 0 {
+		params.Set("num", fmt.Sprintf("%d", util.Min(50, total-count)))
+	}
 	if cursor != nil {
 		params.Set("cursor", fmt.Sprintf("%s", *cursor))
 	}
@@ -101,10 +104,10 @@ func (my XiaoHongShu) GetVideos(openId, aid string, cursor, finish *string, star
 		}
 		return nil
 	})
-	log.Println("结束请求:" + uri.String())
 	if err != nil {
 		return err
 	}
+	log.Println("结束请求:" + uri.String())
 	list := gjson.Get(body, "data.notes").Array()
 	videos := make([]data.Video, 0)
 	for i, r := range list {

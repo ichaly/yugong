@@ -10,6 +10,7 @@ import (
 	"github.com/ichaly/yugong/core/util"
 	"github.com/tidwall/gjson"
 	"gorm.io/gorm"
+	"log"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -80,6 +81,9 @@ func (my Douyin) GetVideos(openId, aid string, cursor, finish *string, start *ti
 		return nil
 	}
 	params := url.Values{"count": []string{"50"}, "sec_user_id": []string{openId}, "aid": []string{"6383"}}
+	if finish == nil && total > 0 {
+		params.Set("count", fmt.Sprintf("%d", util.Min(50, total-count)))
+	}
 	if cursor != nil {
 		params.Add("max_cursor", *cursor)
 	}
@@ -96,6 +100,7 @@ func (my Douyin) GetVideos(openId, aid string, cursor, finish *string, start *ti
 	})
 	str := util.JoinString(uri.String(), "&X-Bogus=", my.script.Sign(uri.RawQuery, req.Agent))
 	var body string
+	log.Println("开始请求:" + uri.String())
 	err := retry.Do(func() error {
 		res, err := req.Get(str)
 		if err != nil {
@@ -110,6 +115,7 @@ func (my Douyin) GetVideos(openId, aid string, cursor, finish *string, start *ti
 	if err != nil {
 		return err
 	}
+	log.Println("结束请求:" + uri.String())
 	list := gjson.Get(body, "aweme_list").Array()
 	videos := make([]data.Video, 0)
 	for i, r := range list {
