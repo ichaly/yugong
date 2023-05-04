@@ -135,9 +135,11 @@ func (my Douyin) GetVideos(openId, aid string, cursor, finish *string, start *ti
 			if createTime <= num {
 				break
 			}
-		} else if start != nil && start.UnixMilli() >= createTime {
+		} else if start != nil {
 			// 到达了开始时间
-			break
+			if start.UnixMilli() >= createTime {
+				break
+			}
 		} else if total != -1 && count+i >= total {
 			// 达到了同步数量
 			break

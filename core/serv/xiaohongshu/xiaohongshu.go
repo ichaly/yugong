@@ -10,6 +10,7 @@ import (
 	"github.com/ichaly/yugong/core/util"
 	"github.com/tidwall/gjson"
 	"gorm.io/gorm"
+	"log"
 	"net/url"
 	"strings"
 	"time"
@@ -88,6 +89,7 @@ func (my XiaoHongShu) GetVideos(openId, aid string, cursor, finish *string, star
 		"web_session": "040069b5511a2a147061d4f17a364b16fb5f6c",
 	})
 	var body string
+	log.Println("开始请求:" + uri.String())
 	err := retry.Do(func() error {
 		res, err := req.Get(uri.String())
 		if err != nil {
@@ -99,6 +101,7 @@ func (my XiaoHongShu) GetVideos(openId, aid string, cursor, finish *string, star
 		}
 		return nil
 	})
+	log.Println("结束请求:" + uri.String())
 	if err != nil {
 		return err
 	}
@@ -132,9 +135,11 @@ func (my XiaoHongShu) GetVideos(openId, aid string, cursor, finish *string, star
 			if strings.Compare(vid, *finish) <= 0 {
 				break
 			}
-		} else if start != nil && start.UnixMilli() >= v.SourceAt.UnixMilli() {
-			// 到达了开始时间
-			continue
+		} else if start != nil {
+			if start.UnixMilli() >= v.SourceAt.UnixMilli() {
+				// 到达了开始时间
+				break
+			}
 		} else if total != -1 && count+i >= total {
 			// 达到了同步数量
 			break
@@ -170,6 +175,7 @@ func (my XiaoHongShu) detail(v *data.Video) error {
 		"web_session": "040069b5511a2a147061d4f17a364b16fb5f6c",
 	}).SetParams(params)
 	var body string
+	log.Println("开始请求详情:" + uri.String())
 	err := retry.Do(func() error {
 		res, err := req.Json(uri.String())
 		if err != nil {
@@ -184,6 +190,7 @@ func (my XiaoHongShu) detail(v *data.Video) error {
 	if err != nil {
 		return err
 	}
+	log.Println("结束请求详情:" + uri.String())
 	detail := gjson.Get(body, "data.items.0.note_card")
 	if !detail.IsObject() {
 		return errors.New("detail is not object")
