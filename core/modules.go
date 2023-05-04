@@ -11,7 +11,10 @@ import (
 
 var Modules = fx.Options(
 	fx.Provide(
-		base.NewConfig,
+		fx.Annotate(
+			base.NewConfig,
+			fx.ParamTags(`name:"configFile"`),
+		),
 		base.NewStore,
 		base.NewCache,
 		base.NewConnect,

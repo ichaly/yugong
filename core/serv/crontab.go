@@ -83,7 +83,7 @@ func (my *Crontab) start() {
 	if my.config.Condition != nil {
 		tx = tx.Where(my.config.Condition.Query, my.config.Condition.Values)
 	}
-	tx.Find(&authors)
+	tx.Where("disable = ?", false).Find(&authors)
 
 	// add cron job
 	for _, author := range authors {
@@ -104,10 +104,10 @@ func (my *Crontab) getVideos(authorId int64) {
 		var maxTime time.Time
 		row := my.db.Model(&data.Video{}).Select("max(source_at) as maxTime").Where("aid = ?", author.Aid).Row()
 		_ = row.Scan(&maxTime)
-		cursor = util.StringPtr(strconv.FormatInt(time.Now().UnixMilli(), 10))
 		if !maxTime.IsZero() {
 			finish = util.StringPtr(strconv.FormatInt(maxTime.UnixMilli(), 10))
 		}
+		cursor = util.StringPtr(strconv.FormatInt(time.Now().UnixMilli(), 10))
 	} else if author.From == data.XiaoHongShu {
 		row := my.db.Model(&data.Video{}).
 			Select("vid").Where("aid = ?", author.Aid).

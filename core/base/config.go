@@ -48,8 +48,8 @@ type Condition struct {
 	Values []string `json:"Values"`
 }
 
-func NewConfig() (*Config, error) {
-	return readInConfig(filepath.Join("../conf", "dev.yml"))
+func NewConfig(confPath string) (*Config, error) {
+	return readInConfig(confPath)
 }
 
 func readInConfig(configFile string) (*Config, error) {
