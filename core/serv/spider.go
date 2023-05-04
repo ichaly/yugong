@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type SpiderParams struct {
+type SpiderGroup struct {
 	fx.In
 	Spiders []Spider `group:"spider"`
 }

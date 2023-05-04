@@ -8,37 +8,31 @@ import (
 	"net/http"
 )
 
-type Enhance struct {
-	fx.In
-	Plugins     []Plugin `group:"plugin"`
-	Middlewares []Plugin `group:"middleware"`
-}
-
 func Bootstrap(
-	l fx.Lifecycle, c *Config, h *chi.Mux, e Enhance, s *Server,
+	l fx.Lifecycle, c *Config, h *chi.Mux, g PluginGroup, s *Server,
 ) {
 	//init middlewares
-	for _, m := range e.Middlewares {
+	for _, m := range g.Middlewares {
 		if !m.Protected() {
 			m.Init(h)
 		}
 	}
 	//wrap service
 	h.Group(func(h chi.Router) {
-		for _, m := range e.Middlewares {
+		for _, m := range g.Middlewares {
 			if m.Protected() {
 				m.Init(h)
 			}
 		}
 		s.Attach(h)
-		for _, p := range e.Plugins {
+		for _, p := range g.Plugins {
 			if p.Protected() {
 				p.Init(h)
 			}
 		}
 	})
 	//init plugins
-	for _, p := range e.Plugins {
+	for _, p := range g.Plugins {
 		if !p.Protected() {
 			p.Init(h)
 		}

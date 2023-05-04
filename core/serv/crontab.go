@@ -25,7 +25,7 @@ type Crontab struct {
 	spiders   map[data.Platform]Spider
 }
 
-func NewCrontab(l fx.Lifecycle, d *gorm.DB, c *base.Config, s SpiderParams, q *Queue) *Crontab {
+func NewCrontab(l fx.Lifecycle, d *gorm.DB, c *base.Config, g SpiderGroup, q *Queue) *Crontab {
 	timezone, _ := time.LoadLocation("Asia/Shanghai")
 	scheduler := gocron.NewScheduler(timezone)
 	scheduler.SingletonModeAll()
@@ -34,7 +34,7 @@ func NewCrontab(l fx.Lifecycle, d *gorm.DB, c *base.Config, s SpiderParams, q *Q
 		spiders:   make(map[data.Platform]Spider),
 		scheduler: scheduler,
 	}
-	for _, s := range s.Spiders {
+	for _, s := range g.Spiders {
 		crontab.spiders[s.Name()] = s
 	}
 	l.Append(fx.Hook{

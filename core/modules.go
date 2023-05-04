@@ -24,6 +24,10 @@ var Modules = fx.Options(
 		serv.NewCrontab,
 		douyin.NewScript,
 		xiaohongshu.NewScript,
+		fx.Annotated{
+			Group:  "plugin",
+			Target: rest.NewBlogApi,
+		},
 		fx.Annotate(
 			douyin.NewDouyin,
 			fx.As(new(serv.Spider)),
@@ -34,10 +38,6 @@ var Modules = fx.Options(
 			fx.As(new(serv.Spider)),
 			fx.ResultTags(`group:"spider"`),
 		),
-		fx.Annotated{
-			Group:  "plugin",
-			Target: rest.NewBlogApi,
-		},
 	),
 	fx.Invoke(base.Bootstrap),
 )
