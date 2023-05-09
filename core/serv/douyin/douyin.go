@@ -134,11 +134,8 @@ func (my Douyin) GetVideos(openId, aid string, cursor, finish *string, start *ti
 		createTime := r.Get("create_time").Int() * 1000
 
 		if finish != nil {
-			num, err := strconv.ParseInt(*finish, 10, 64)
-			if err != nil {
-				num = 0
-			}
-			if createTime <= num {
+			// 到达了结束时间
+			if createTime <= util.ParseLong(*finish) {
 				break
 			}
 		} else if start != nil {
