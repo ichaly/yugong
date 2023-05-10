@@ -13,7 +13,6 @@ import (
 	"github.com/ichaly/yugong/zlog"
 	"github.com/tidwall/gjson"
 	"gorm.io/gorm"
-	"log"
 	"net/url"
 	"strings"
 	"time"
@@ -98,7 +97,7 @@ func (my XiaoHongShu) GetVideos(openId, aid string, cursor, finish *string, star
 		"x-s":     token["X-s"],
 	})
 	var body string
-	log.Println("开始请求:" + uri.String())
+	zlog.Debug("开始请求", zlog.String("uri", uri.String()))
 	err := retry.Do(func() error {
 		session, err := my.session()
 		if err != nil {
@@ -115,7 +114,7 @@ func (my XiaoHongShu) GetVideos(openId, aid string, cursor, finish *string, star
 	if err != nil {
 		return err
 	}
-	log.Println("结束请求:" + uri.String())
+	zlog.Info("结束请求", zlog.String("uri", uri.String()))
 	list := gjson.Get(body, "data.notes").Array()
 	videos := make([]data.Video, 0)
 	for i, r := range list {
@@ -184,7 +183,7 @@ func (my XiaoHongShu) detail(v *data.Video) error {
 		"x-s":     token["X-s"],
 	}).SetParams(params)
 	var body string
-	log.Println("开始请求详情:" + uri.String())
+	zlog.Debug("开始请求详情", zlog.String("vid", v.Vid))
 	err := retry.Do(func() error {
 		session, err := my.session()
 		if err != nil {
@@ -201,22 +200,13 @@ func (my XiaoHongShu) detail(v *data.Video) error {
 	if err != nil {
 		return err
 	}
-	log.Println("结束请求详情:" + uri.String())
+	zlog.Info("结束请求详情", zlog.String("vid", v.Vid))
 	detail := gjson.Get(body, "data.items.0.note_card")
 	if !detail.IsObject() {
 		return errors.New("detail is not object")
 	}
 	v.SourceAt = time.UnixMilli(detail.Get("time").Int())
 	v.Url = fmt.Sprintf("http://sns-video-bd.xhscdn.com/%s", detail.Get("video.consumer.origin_video_key").String())
-	return nil
-}
-
-func (my XiaoHongShu) check(body string) error {
-	//gjson.Get(body, "msg").String() == "登录已过期" ||
-	if gjson.Get(body, "code").Int() == -100 {
-		_ = my.cache.Delete(context.Background(), SESSION_KEY)
-		return errors.New("登录已过期")
-	}
 	return nil
 }
 
@@ -273,4 +263,13 @@ func (my XiaoHongShu) session() (string, error) {
 		return "", err
 	}
 	return ses, nil
+}
+
+func (my XiaoHongShu) check(body string) error {
+	//gjson.Get(body, "msg").String() == "登录已过期" ||
+	if gjson.Get(body, "code").Int() == -100 {
+		//_ = my.cache.Delete(context.Background(), SESSION_KEY)
+		return errors.New("登录已过期")
+	}
+	return nil
 }
