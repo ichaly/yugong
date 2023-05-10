@@ -31,12 +31,12 @@ func (my *BlogApi) Protected() bool {
 
 func (my *BlogApi) Init(r chi.Router) {
 	r.Route("/blog", func(r chi.Router) {
-		r.Get("/once", my.startHandler)
+		r.Get("/once", my.onceHandler)
 		r.Post("/save", my.saveHandler)
 	})
 }
 
-func (my *BlogApi) startHandler(w http.ResponseWriter, r *http.Request) {
+func (my *BlogApi) onceHandler(w http.ResponseWriter, r *http.Request) {
 	tag := r.URL.Query().Get("tag")
 	my.crontab.Once(tag)
 	_ = my.render.JSON(w, base.OK.WithMessage("操作成功"))
