@@ -6,6 +6,7 @@ import (
 	"github.com/ichaly/yugong/core/base"
 	"github.com/ichaly/yugong/core/data"
 	"github.com/ichaly/yugong/core/util"
+	"github.com/ichaly/yugong/zlog"
 	"go.uber.org/fx"
 	"gorm.io/gorm"
 	"strconv"
@@ -97,6 +98,7 @@ func (my *Crontab) start() {
 }
 
 func (my *Crontab) getVideos(authorId int64) {
+	zlog.Debug("get videos", zlog.Int64("authorId", authorId))
 	var author data.Author
 	my.db.First(&author, authorId)
 	var cursor, finish *string
