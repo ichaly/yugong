@@ -215,37 +215,26 @@ func (my XiaoHongShu) session() (string, error) {
 	if err == nil && ses != "" {
 		return ses, nil
 	}
+	data := map[string]string{}
 	uri, _ := url.Parse("https://edith.xiaohongshu.com/api/sns/web/v1/login/activate")
-	req := serv.NewFetch(my.config).UseProxy().SetHeaders(map[string]string{
-		"sec-ch-ua":          "\"Microsoft Edge\";v=\"113\", \"Chromium\";v=\"113\", \"Not-A.Brand\";v=\"24\"",
-		"x-t":                "1.6837E+12",
-		"x-b3-traceid":       "d5b51f56afaff2cb",
-		"sec-ch-ua-mobile":   "?0",
-		"user-agent":         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1773.35",
-		"content-type":       "application/json;charset=UTF-8",
-		"accept":             "application/json, text/plain, */*",
-		"x-s-common":         "2UQAPsHCPUIjqArjwjHjNsQhPsHCH0rjNsQhPaHCH0P1PUhIHjIj2eHjwjQ+GnPW/MPjNsQhPUHCHdYiqUMIGUM78nHjNsQh+sHCH0H1+shFHjIj2eLjwjHlweWI+eS0wBPAG/Q1GgWAqeplwB8UPBrUweQ08946Je8D8/pi40L9w/PIPeZI+eLM+eWMHjIj2eGjw0r9weP7Pec7P/rI+0rVHdW7H0ijnbSgg9pEadkYp9zMp/+y4LSxJ9Swprbk/r+t2fbg8opnaBl7nS+Q+DS187YQyg4knpYs4M+gLnSOyLiFGLY+4B+o/gzDPS8kanS7ynPUJBEjJbkVG9EwqBHU+BSOyLShanS7yn+oz0pjzASinD+Q+DSxnfM+PDMC/p4z2rMgL/pwzB+h/SzmPSkxLfT+2f47nnknyMkL//p+PSDA/p4+2bkrnfk+yDQxn/QnyDRLpfTyzMkknnkaybDU//zypFDM/FzyJLRoagY+yS83/Szz2SSgz/m+pB+7/Lz++pSLpfMOpBli/0Q82bkxzfYwzF8xngkbPSkLafl+PDkTnnkd+pkLafT8pr83np4zPDMg//b+zbbhnDzyybSCafSyzF83/fkByDELc/m+pMrUnp4+2pSTafY+pFFInfMwyDELpgS+zFpCnSzwJLRgn/Q8yfVl//QyJLRrz/pyyfzx/D4z2DRLn/myzbSh/Lzz4FEgpfM8pMQT/Lz34FhUagY+PS8x/pzb2rEC8BSw2SLFnfMtyMkr/fYyzbLlngkb2rMgLfl+ySQinDzQPMSTa/Qwpbb7ngk0+pkrag4OzbLl/Lz8PDRL//bypbLIngkayrECzgS8PDpC/p482bDUag4wprFFnDzyyFRLGAmwzBql/pzm4FMLyAp8yDkxngkDypkra/p+prrInnM+2DExnfS82DrM/SzQ2DMrzgYyJLFA/gkzPbSgnfT+zrkx/Sz+2DhUp/z+2SLUnfkmPDELnfSOzBlVnD4b4MST/gYwzBlV/LzwySkTLfkOzFM7nnknJLErp/++2fY3nnMp+LRLpgk82SQi/L+twaHVHdWhH0ija/PhqDYD87+xJ7mdag8Sq9zn494QcUT6aLpPJLQy+nLApd4G/B4BprShLA+jqg4bqD8S8gYDPBp3Jf+m2DMBnnEl4BYQyrkSL9z+2obl49zQ4DbApFQ0yo4c4ozdJ/c9aMpC2rSiPoPI/rTAydb7JdD7zbkQ4fRA2BQcydS04LbQyrTSzBr7q98DqBlc4g4+PS874d+64gmQc7pT/Sqha7kn4M+Qc94SyM8Fao4l4FzQzLMAanWI8gYPnnzQ2bPAag89qM4M4MH3+7kc2f+wq9zVP9pfLo4LanS9qM8c4rTOpdzlq7bFpFYVafpLJrq6ag8rzrSiqpzdpd4OadbF4LShzn+yL94SpdpFwLS94fpnpdzyanTVaFS3woQ1c/4AnpplPnQm+npxpdzCJMPMqM+0qS4C8epSLM40LrSh+nprqgzIaLpw8nzl4eSjnLz+4B8PzFShJ9pL4g4VJfFA8gYDzpmQyM4OanSHJgbAwrzQcFzltF8nJFSkG9SSLocMaL+yyezs/d+rqrTS2obFcLDAcg+x8A4SzBRyOaHVHdWEH0i7+ecEPePEw/cVHdWlPsHCP0DUKc==",
-		"x-s":                "XYW_eyJzaWduU3ZuIjoiNTAiLCJzaWduVHlwZSI6IngxIiwiYXBwSWQiOiJ4aHMtcGMtd2ViIiwic2lnblZlcnNpb24iOiIxIiwicGF5bG9hZCI6IjZmM2MzMWQxMWQ5NDcxNTA2ZjRkMzgwYjVkZTM5M2Y3MWMxZDZjMjBjY2VjOTVkZGZiYjRhY2M4ZWI5ODZmOGIxMjVkNTQzYWE0MTcwMDM5YTVmOTlhN2YxZjFhNGFjYzE2ZTJlM2JmYjg5ZTJkYTFkYWQ2MWM1MDQxZDZhYzJiZGFkNjFjNTA0MWQ2YWMyYmJhMWM0ZmNjNTUyMGEzZTNmOWY2Yjk1M2ZmODE5ZjdjNGQzOTY0ZDYxMDQwNWVmYWRmMDkwN2IxM2VjMTExNzdiNzU4ZmJkZDNhZDU1YzExMWRlMjRhZDI3YmI2NTQwYzc5ZDIwODU1MDY2OTM1ZTU0YzRhNzEyY2EzMWYxY2IwNTM4ZDZkOTc0NDg1MTAwMTk5YjJjYzdiZDI5MTA0YmMzNjZiYzA5NTIzMDExZmM3MzQ0YWZkMDJjNTMzN2U4MzU2ZjA2NTZiODllZGEwYmMxNDllMDNjZmRjOGMwYjVmNDU3MzhkYmU5OTUzYzRhMCJ9",
-		"sec-ch-ua-platform": "\"macOS\"",
-		"origin":             "https://www.xiaohongshu.com",
-		"sec-fetch-site":     "same-site",
-		"sec-fetch-mode":     "cors",
-		"sec-fetch-dest":     "empty",
-		"referer":            "https://www.xiaohongshu.com/",
-		"accept-encoding":    "gzip, deflate, br",
-		"accept-language":    "zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7",
-	}).SetCookies(map[string]string{
-		"acw_tc":            "5a9645e75fccbc9d6a87110a36d15e7c22b18a97a1d3e639461661dfe6d1dd0d",
-		"xhsTrackerId":      "2fd9d3f2-85a1-4a82-98d3-dada8acc5c6b",
-		"xhsTrackerId.sig":  "6Eh9OK7-pzw9jzGy3ZpBm1EixJarNLCWWUURJeW31sQ",
-		"extra_exp_ids":     "yamcha_0327_clt,h5_1208_exp3,ques_clt2",
-		"extra_exp_ids.sig": "-9P_FIY9nRpp4czlpi3JlPCL_zdr5ZMYd73Vy8sdzzY",
-		"webBuild":          "2.4.4",
+	a1 := "18805433dffvrl8b2hut9pmkcdwizrt067cr7g6i330000326172"
+	header := my.script.Header(a1, uri, data)
+	req := serv.NewFetch(my.config).UseProxy().SetHeaders(header).SetCookies(map[string]string{
+		"a1":                a1,
+		"xhsTrackerId":      "6b23733f-4cf5-41dd-9cca-49379fa85fdd",
+		"xhsTrackerId.sig":  "Q8epTi0Bb_ZS-p7wWnXqmNMTm2BL19btcdna5GDdlSM",
+		"webId":             "8f93932a0b9cd184743340efeb37f28e",
+		"gid":               "yYY824qqiJK4yYY824qqfWkKiihF1YDJx79jS3qU6TSfEFq83uF98W888qJKyWJ8dfSD202Y",
+		"gid.sign":          "t3eeEgSrn9qRxwSMjVtIpNI9cKs=",
 		"xsecappid":         "xhs-pc-web",
-		"a1":                "188049c8c3a2nax3p5q8fr0a282cggol6de5hv56930000455485",
-		"gid":               "yYY84jSYfYKYyYY84jSYSfh2q0JI0CqU2AYidKjF80JYJ2q8Skkl1x8884224Y28JqYjY82y",
-		"gid.sign":          "/7dqcU70e3EnTailQnkW+HlfMvQ=",
-	})
+		"web_session":       "040069b5511a2a147061ab2a69364bc558a1f3",
+		"websectiga":        "6169c1e84f393779a5f7de7303038f3b47a78e47be716e7bec57ccce17d45f99",
+		"sec_poison_id":     "eec1467b-f5c0-4155-9103-48ad9c266bf7",
+		"extra_exp_ids":     "yamcha_0327_exp,h5_1208_exp3,ques_clt2",
+		"extra_exp_ids.sig": "ETM51AFqVyLPOioG2x0qNaEzMLVwrEIN37uTpfkLqxc",
+		"webBuild":          "2.4.5",
+		"acw_tc":            "736474944edf09618c1a6293d17361df55ee01fad643d8c9eb0ebf95c5682002",
+	}).SetParams(data)
 	var body string
 	zlog.Debug("开始登陆:" + uri.String())
 	res, err := req.Json(uri.String())

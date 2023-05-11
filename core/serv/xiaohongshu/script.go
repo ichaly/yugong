@@ -6,7 +6,10 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/dop251/goja"
 	"github.com/ichaly/yugong/core/util"
+	"math/rand"
+	"net/url"
 	"strings"
+	"time"
 )
 
 var (
@@ -95,6 +98,32 @@ func (my *Script) Common(str, xt, xs string) string {
 	return my.common(encodeUtf8(json))
 }
 
+func (my *Script) Header(a1 string, uri *url.URL, data map[string]string) map[string]string {
+	token := my.Sign(fmt.Sprintf("%s?%s", uri.Path, uri.RawQuery), data)
+	xt := token["X-t"]
+	xs := token["X-s"]
+	header := map[string]string{
+		"sec-ch-ua":          "\"Microsoft Edge\";v=\"113\", \"Chromium\";v=\"113\", \"Not-A.Brand\";v=\"24\"",
+		"sec-ch-ua-mobile":   "?0",
+		"user-agent":         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.35",
+		"accept":             "application/json, text/plain, */*",
+		"sec-ch-ua-platform": "\"macOS\"",
+		"origin":             "https://www.xiaohongshu.com",
+		"sec-fetch-site":     "same-site",
+		"sec-fetch-mode":     "cors",
+		"sec-fetch-dest":     "empty",
+		"referer":            "https://www.xiaohongshu.com/",
+		"accept-encoding":    "gzip, deflate, br",
+		"accept-language":    "zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7",
+		"content-type":       "application/json;charset=UTF-8",
+		"x-t":                xt,
+		"x-s":                xs,
+		"x-b3-traceid":       trace(),
+		"x-s-common":         my.Common(a1, xt, xs),
+	}
+	return header
+}
+
 func encodeUtf8(str string) []byte {
 	utf8Bytes := []byte(str)
 	encodedBytes := make([]byte, 0, len(utf8Bytes))
@@ -107,4 +136,16 @@ func encodeUtf8(str string) []byte {
 		}
 	}
 	return encodedBytes
+}
+
+func trace() string {
+	re_ := "abcdef0123456789"
+	je := 16
+	e := ""
+	for t := 0; t < 16; t++ {
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		index := r.Intn(je)
+		e += string(re_[index])
+	}
+	return e
 }
