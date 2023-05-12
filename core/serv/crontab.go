@@ -126,6 +126,12 @@ func (my *Crontab) getVideos(authorId int64) {
 
 func (my *Crontab) syncFiles() {
 	var videos []data.Video
+	//SELECT (SELECT "count"(id) FROM video v1 WHERE v1.source_at<=v0.source_at) id,v0.id oid,v0.source_at
+	//FROM video v0 WHERE "state" = 0 ORDER BY source_at
+	//my.db.Table("video v0").
+	//	Select("(SELECT count(id) FROM video v1 WHERE v1.source_at<=v0.source_at) id,v0.id oid,v0.source_at").
+	//	Where("state = ?", 0).
+	//	Order("source_at asc")
 	my.db.Where("state", 0).Order("source_at asc").Find(&videos)
 	for _, v := range videos {
 		my.queue.Push(NewTask(my.config.Workspace, my.db, v))
