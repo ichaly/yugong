@@ -87,11 +87,11 @@ func (my XiaoHongShu) GetAuthor(author *data.Author) error {
 	return nil
 }
 
-func (my XiaoHongShu) GetVideos(openId, aid string, cursor, finish *string, start *time.Time, total, count int) error {
+func (my XiaoHongShu) GetVideos(fid, aid string, cursor, finish *string, start *time.Time, total, count int) error {
 	if finish == nil && start == nil && total == 0 {
 		return nil
 	}
-	params := url.Values{"num": []string{"50"}, "user_id": []string{openId}, "cursor": []string{""}}
+	params := url.Values{"num": []string{"50"}, "user_id": []string{fid}, "cursor": []string{""}}
 	if finish == nil && total > 0 {
 		params.Set("num", fmt.Sprintf("%d", util.Min(50, total-count)))
 	}
@@ -145,7 +145,7 @@ func (my XiaoHongShu) GetVideos(openId, aid string, cursor, finish *string, star
 		title := r.Get("display_title").String()
 		v := data.Video{
 			From: data.XiaoHongShu, Vid: vid, Title: title, Cover: cover, Width: width,
-			Height: height, Fid: openId, Aid: aid, UploadAt: util.TimePtr(time.Now()),
+			Height: height, Fid: fid, Aid: aid, UploadAt: util.TimePtr(time.Now()),
 		}
 		err := my.detail(&v)
 		if err != nil {
@@ -171,7 +171,7 @@ func (my XiaoHongShu) GetVideos(openId, aid string, cursor, finish *string, star
 	if size > 0 {
 		count = count + size
 		cursor = util.StringPtr(gjson.Get(body, "data.cursor").String())
-		err := my.GetVideos(openId, aid, cursor, finish, start, total, count)
+		err := my.GetVideos(fid, aid, cursor, finish, start, total, count)
 		if err != nil {
 			return err
 		}

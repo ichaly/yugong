@@ -76,11 +76,11 @@ func (my Douyin) GetAuthor(author *data.Author) error {
 	return nil
 }
 
-func (my Douyin) GetVideos(openId, aid string, cursor, finish *string, start *time.Time, total, count int) error {
+func (my Douyin) GetVideos(fid, aid string, cursor, finish *string, start *time.Time, total, count int) error {
 	if finish == nil && start == nil && total == 0 {
 		return nil
 	}
-	params := url.Values{"count": []string{"50"}, "sec_user_id": []string{openId}, "aid": []string{"6383"}}
+	params := url.Values{"count": []string{"50"}, "sec_user_id": []string{fid}, "aid": []string{"6383"}}
 	if finish == nil && total > 0 {
 		params.Set("count", fmt.Sprintf("%d", util.Min(50, total-count)))
 	}
@@ -158,7 +158,7 @@ func (my Douyin) GetVideos(openId, aid string, cursor, finish *string, start *ti
 	if size > 0 {
 		count = count + size
 		cursor = util.StringPtr(strconv.FormatInt(gjson.Get(body, "max_cursor").Int(), 10))
-		err := my.GetVideos(openId, aid, cursor, finish, start, total, count)
+		err := my.GetVideos(fid, aid, cursor, finish, start, total, count)
 		if err != nil {
 			return err
 		}

@@ -14,5 +14,5 @@ type SpiderGroup struct {
 type Spider interface {
 	Name() data.Platform
 	GetAuthor(author *data.Author) error
-	GetVideos(openId, aid string, cursor, finish *string, start *time.Time, total, count int) error
+	GetVideos(fid, aid string, cursor, finish *string, start *time.Time, total, count int) error
 }
