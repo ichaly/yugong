@@ -13,6 +13,7 @@ import (
 	"github.com/ichaly/yugong/zlog"
 	"github.com/tidwall/gjson"
 	"gorm.io/gorm"
+	"math/rand"
 	"net/url"
 	"strings"
 	"time"
@@ -21,6 +22,15 @@ import (
 const (
 	SESSION_KEY = "SESSION_KEY"
 )
+
+type BodyParseError struct {
+	code    int64
+	message string
+}
+
+func (err BodyParseError) Error() string {
+	return err.message
+}
 
 type XiaoHongShu struct {
 	db     *gorm.DB
@@ -174,6 +184,7 @@ func (my XiaoHongShu) GetVideos(openId, aid string, cursor, finish *string, star
 }
 
 func (my XiaoHongShu) detail(v *data.Video) error {
+	//开始获取详情
 	params := map[string]string{"source_note_id": v.Vid}
 	uri, _ := url.Parse("https://edith.xiaohongshu.com/api/sns/web/v1/feed")
 	token := my.script.Sign(uri.Path, params)
@@ -196,15 +207,16 @@ func (my XiaoHongShu) detail(v *data.Video) error {
 		}
 		body = res.String()
 		return my.check(body)
-	})
+	}, retry.OnRetry(func(n uint, err error) {
+		s := rand.Intn(5)
+		time.Sleep(time.Second * time.Duration(int(n+1)*5+s))
+		req = req.UseProxy()
+	}))
 	if err != nil {
 		return err
 	}
 	zlog.Info("结束请求详情", zlog.String("vid", v.Vid))
 	detail := gjson.Get(body, "data.items.0.note_card")
-	if !detail.IsObject() {
-		return errors.New("detail is not object")
-	}
 	v.SourceAt = time.UnixMilli(detail.Get("time").Int())
 	v.Url = fmt.Sprintf("http://sns-video-bd.xhscdn.com/%s", detail.Get("video.consumer.origin_video_key").String())
 	return nil
@@ -239,10 +251,16 @@ func (my XiaoHongShu) session() (string, error) {
 }
 
 func (my XiaoHongShu) check(body string) error {
-	//gjson.Get(body, "msg").String() == "登录已过期" ||
-	if gjson.Get(body, "code").Int() == -100 {
+	code := gjson.Get(body, "code").Int()
+	if code == -100 {
 		//_ = my.cache.Delete(context.Background(), SESSION_KEY)
-		return errors.New("登录已过期")
+		return BodyParseError{code, "登录已过期"}
+	} else if code == 300015 {
+		return BodyParseError{code, "浏览器异常，请尝试关闭/卸载风险插件或重启试试"}
+	} else if code == 300012 {
+		return BodyParseError{code, "网络连接异常，请检查网络设置或重启试试"}
+	} else if code != 0 {
+		return BodyParseError{code, "result code is not 0"}
 	}
 	return nil
 }
