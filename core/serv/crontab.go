@@ -9,7 +9,6 @@ import (
 	"github.com/ichaly/yugong/zlog"
 	"go.uber.org/fx"
 	"gorm.io/gorm"
-	"strconv"
 	"time"
 )
 
@@ -107,9 +106,9 @@ func (my *Crontab) getVideos(authorId int64) {
 		row := my.db.Model(&data.Video{}).Select("max(source_at) as maxTime").Where("aid = ?", author.Aid).Row()
 		_ = row.Scan(&maxTime)
 		if !maxTime.IsZero() {
-			finish = util.StringPtr(strconv.FormatInt(maxTime.UnixMilli(), 10))
+			finish = util.StringPtr(util.FormatLong(maxTime.UnixMilli()))
 		}
-		cursor = util.StringPtr(strconv.FormatInt(time.Now().UnixMilli(), 10))
+		cursor = util.StringPtr(util.FormatLong(time.Now().UnixMilli()))
 	} else if author.From == data.XiaoHongShu {
 		row := my.db.Model(&data.Video{}).
 			Select("vid").Where("aid = ?", author.Aid).

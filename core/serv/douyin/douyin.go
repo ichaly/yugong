@@ -95,8 +95,8 @@ func (my Douyin) GetVideos(openId, aid string, cursor, finish *string, start *ti
 	req := serv.NewFetch(my.config).UseProxy().SetHeaders(map[string]string{
 		"referer": "https://www.douyin.com/",
 	}).SetCookies(map[string]string{
-		"passport_csrf_token": "c8b96614139f50d240232221b574cacb",
-		"ttwid":               "1%7CHQXlIa0A7vFQ2Je4UliR5vOoYX6tSdv24RZqMfNUaFg%7C1680791252%7Cb04d0bdf0e025c3135156fd23fdc730398da79188b3b458b2a051ca326dc962f",
+		"passport_csrf_token": "325b44eb177b269871d609f97649893e",
+		"ttwid":               "1%7C8afBBEv3O1lekBnmOgwzAJSoHBy6kD7z_FahdsWeiLE%7C1680262762%7C37d3142c1a2b8e1eb10fb60cb2e88971b0088085bd36b1714a247063011cc77c",
 	})
 	str := util.JoinString(uri.String(), "&X-Bogus=", my.script.Sign(uri.RawQuery, req.Agent))
 	var body string
