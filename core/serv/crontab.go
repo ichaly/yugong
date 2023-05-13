@@ -116,7 +116,7 @@ func (my *Crontab) getVideos(authorId int64) {
 		_ = row.Scan(&finish)
 	}
 	err := my.spiders[author.From].GetVideos(
-		author.OpenId, author.Aid, cursor, finish, author.Start, author.Total, 0,
+		author.Aid, author.OpenId, cursor, finish, author.Start, author.Total, 0,
 	)
 	if err != nil {
 		return

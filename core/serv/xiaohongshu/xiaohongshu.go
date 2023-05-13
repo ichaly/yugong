@@ -87,7 +87,7 @@ func (my XiaoHongShu) GetAuthor(author *data.Author) error {
 	return nil
 }
 
-func (my XiaoHongShu) GetVideos(fid, aid string, cursor, finish *string, start *time.Time, total, count int) error {
+func (my XiaoHongShu) GetVideos(aid, fid string, cursor, finish *string, start *time.Time, total, count int) error {
 	if finish == nil && start == nil && total == 0 {
 		return nil
 	}
@@ -132,22 +132,15 @@ func (my XiaoHongShu) GetVideos(fid, aid string, cursor, finish *string, start *
 		if typ != "video" {
 			continue
 		}
-		isTop := r.Get("interact_info.sticky").Bool()
-		// TODO: 置顶数据暂时忽略
-		if isTop {
-			continue
-		}
-
 		vid := r.Get("note_id").String()
 		cover := fmt.Sprintf("https://sns-img-bd.xhscdn.com/%s", r.Get("cover.trace_id").String())
-		width := r.Get("cover.width").Int()
-		height := r.Get("cover.height").Int()
 		title := r.Get("display_title").String()
+		sticky := r.Get("interact_info.sticky").Bool()
 		v := data.Video{
-			From: data.XiaoHongShu, Vid: vid, Title: title, Cover: cover, Width: width,
-			Height: height, Fid: fid, Aid: aid, UploadAt: util.TimePtr(time.Now()),
+			From: data.XiaoHongShu, Vid: vid, Fid: fid, Aid: aid, Sticky: sticky,
+			Title: title, Cover: cover, UploadAt: util.TimePtr(time.Now()),
 		}
-		err := my.detail(&v)
+		err := my.GetDetail(&v)
 		if err != nil {
 			return err
 		}
@@ -183,7 +176,7 @@ func (my XiaoHongShu) GetVideos(fid, aid string, cursor, finish *string, start *
 	return nil
 }
 
-func (my XiaoHongShu) detail(v *data.Video) error {
+func (my XiaoHongShu) GetDetail(v *data.Video) error {
 	//开始获取详情
 	params := map[string]string{"source_note_id": v.Vid}
 	uri, _ := url.Parse("https://edith.xiaohongshu.com/api/sns/web/v1/feed")
@@ -217,8 +210,8 @@ func (my XiaoHongShu) detail(v *data.Video) error {
 	}
 	zlog.Info("结束请求详情", zlog.String("vid", v.Vid))
 	detail := gjson.Get(body, "data.items.0.note_card")
-	v.SourceAt = time.UnixMilli(detail.Get("time").Int())
-	v.Url = fmt.Sprintf("http://sns-video-bd.xhscdn.com/%s", detail.Get("video.consumer.origin_video_key").String())
+	v.SourceAt = util.TimePtr(time.UnixMilli(detail.Get("time").Int()))
+	//v.Url = fmt.Sprintf("http://sns-video-bd.xhscdn.com/%s", detail.Get("video.consumer.origin_video_key").String())
 	return nil
 }
 

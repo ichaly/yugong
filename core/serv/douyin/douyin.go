@@ -76,7 +76,11 @@ func (my Douyin) GetAuthor(author *data.Author) error {
 	return nil
 }
 
-func (my Douyin) GetVideos(fid, aid string, cursor, finish *string, start *time.Time, total, count int) error {
+func (my Douyin) GetDetail(v *data.Video) error {
+	return nil
+}
+
+func (my Douyin) GetVideos(aid, fid string, cursor, finish *string, start *time.Time, total, count int) error {
 	if finish == nil && start == nil && total == 0 {
 		return nil
 	}
@@ -119,18 +123,12 @@ func (my Douyin) GetVideos(fid, aid string, cursor, finish *string, start *time.
 	list := gjson.Get(body, "aweme_list").Array()
 	videos := make([]data.Video, 0)
 	for i, r := range list {
-		isTop := r.Get("video.is_top").Int() == 1
-		// TODO: 置顶数据暂时忽略
-		if isTop {
-			continue
-		}
 		uid := r.Get("author.uid").String()
 		vid := r.Get("aweme_id").String()
 		title := r.Get("desc").String()
-		video := r.Get("video.play_addr.url_list.0").String()
 		cover := r.Get("video.cover.url_list|@reverse|0").String()
-		width := r.Get("video.width").Int()
-		height := r.Get("video.height").Int()
+		sticky := r.Get("video.is_top").Int() == 1
+		//video := r.Get("video.play_addr.url_list.0").String()
 		createTime := r.Get("create_time").Int() * 1000
 
 		if finish != nil {
@@ -149,8 +147,8 @@ func (my Douyin) GetVideos(fid, aid string, cursor, finish *string, start *time.
 		}
 
 		v := data.Video{
-			From: data.DouYin, Vid: vid, Url: video, Title: title, Cover: cover, Width: width, Height: height,
-			Fid: uid, Aid: aid, UploadAt: util.TimePtr(time.Now()), SourceAt: time.UnixMilli(createTime),
+			From: data.DouYin, Fid: uid, Aid: aid, Vid: vid, Title: title, Cover: cover, Sticky: sticky,
+			UploadAt: util.TimePtr(time.Now()), SourceAt: util.TimePtr(time.UnixMilli(createTime)),
 		}
 		videos = append([]data.Video{v}, videos...)
 	}
