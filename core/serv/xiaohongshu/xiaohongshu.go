@@ -128,8 +128,7 @@ func (my XiaoHongShu) GetVideos(aid, fid string, cursor, finish *string, start *
 	list := gjson.Get(body, "data.notes").Array()
 	videos := make([]data.Video, 0)
 	for i, r := range list {
-		typ := r.Get("type").String()
-		if typ != "video" {
+		if r.Get("type").String() != "video" {
 			continue
 		}
 		vid := r.Get("note_id").String()
@@ -140,16 +139,12 @@ func (my XiaoHongShu) GetVideos(aid, fid string, cursor, finish *string, start *
 			From: data.XiaoHongShu, Vid: vid, Fid: fid, Aid: aid, Sticky: sticky,
 			Title: title, Cover: cover, UploadAt: util.TimePtr(time.Now()),
 		}
-		err := my.GetDetail(&v)
-		if err != nil {
-			return err
-		}
 		if finish != nil {
 			if strings.Compare(vid, *finish) <= 0 {
 				break
 			}
 		} else if start != nil {
-			if start.UnixMilli() >= v.SourceAt.UnixMilli() {
+			if v.SourceAt != nil && start.UnixMilli() >= v.SourceAt.UnixMilli() {
 				// 到达了开始时间
 				break
 			}
@@ -187,7 +182,10 @@ func (my XiaoHongShu) GetDetail(v *data.Video) error {
 		"x-s":     token["X-s"],
 	}).SetParams(params)
 	var body string
-	zlog.Debug("开始请求详情", zlog.String("vid", v.Vid))
+	zlog.Debug("开始请求详情",
+		zlog.String("vid", v.Vid),
+		zlog.String("platform", string(v.From)),
+	)
 	err := retry.Do(func() error {
 		session, err := my.session()
 		if err != nil {
@@ -208,10 +206,14 @@ func (my XiaoHongShu) GetDetail(v *data.Video) error {
 	if err != nil {
 		return err
 	}
-	zlog.Info("结束请求详情", zlog.String("vid", v.Vid))
+	zlog.Info("结束请求详情",
+		zlog.String("vid", v.Vid),
+		zlog.String("body", body),
+		zlog.String("platform", string(v.From)),
+	)
 	detail := gjson.Get(body, "data.items.0.note_card")
 	v.SourceAt = util.TimePtr(time.UnixMilli(detail.Get("time").Int()))
-	//v.Url = fmt.Sprintf("http://sns-video-bd.xhscdn.com/%s", detail.Get("video.consumer.origin_video_key").String())
+	v.Url = fmt.Sprintf("http://sns-video-bd.xhscdn.com/%s", detail.Get("video.consumer.origin_video_key").String())
 	return nil
 }
 

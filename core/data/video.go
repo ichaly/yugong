@@ -13,6 +13,7 @@ type Video struct {
 	Cover     string     `gorm:"size:500;comment:封面"`
 	State     int        `gorm:"comment:状态"`
 	Sticky    bool       `gorm:"comment:是否置顶"`
+	Remark    string     `gorm:"type:text;comment:备注"`
 	UploadAt  *time.Time `gorm:"comment:上传时间"`
 	SourceAt  *time.Time `gorm:"comment:原始时间"`
 	CreatedAt time.Time  `gorm:"comment:创建时间"`
