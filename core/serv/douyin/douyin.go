@@ -68,7 +68,6 @@ func (my Douyin) GetAuthor(author *data.Author) error {
 	}
 	author.From = data.DouYin
 	author.OpenId = sec_uid
-	author.Fid = info.Get("uid").String()
 	author.Nickname = info.Get("nickname").String()
 	author.Signature = info.Get("signature").String()
 	author.Avatar = info.Get("avatar_medium.url_list.0").String()
@@ -137,7 +136,7 @@ func (my Douyin) GetVideos(aid, fid string, cursor, finish *string, start *time.
 			if start.UnixMilli() >= createTime {
 				break
 			}
-		} else if total != -1 && count+i >= total {
+		} else if total > 0 && count+i >= total {
 			// 达到了同步数量
 			break
 		}
